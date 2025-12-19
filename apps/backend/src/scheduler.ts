@@ -1,7 +1,7 @@
 import cron from 'node-cron';
 import { db } from './db';
 import { users, bills, settings, payments } from '@netmeter/db';
-import { eq, and, isNull } from 'drizzle-orm';
+import { eq, and, isNull, gte } from 'drizzle-orm';
 import { NotificationService, MONTH_NAMES, normalizeTime } from './services/notification';
 
 /**
@@ -206,7 +206,8 @@ async function retryHeldNotifications() {
 
         console.log('[Scheduler] Checking for held notifications to catch up...');
 
-        // 1. Check for missing Receipts for PAID bills
+        // 1. Check for missing Receipts for PAID bills in the last 48 hours
+        const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
         const paidBills = await db.select({
             bill: bills,
             user: users,
@@ -215,7 +216,10 @@ async function retryHeldNotifications() {
             .from(bills)
             .innerJoin(users, eq(bills.userId, users.id))
             .leftJoin(payments, eq(payments.billId, bills.id))
-            .where(eq(bills.status, 'PAID'));
+            .where(and(
+                eq(bills.status, 'PAID'),
+                gte(bills.paidAt, fortyEightHoursAgo)
+            ));
 
         for (const item of paidBills) {
             // sendReceiptNotification includes hasAlreadySent check internally

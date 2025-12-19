@@ -25,11 +25,11 @@ WORKDIR /app
 COPY --from=builder /app /app
 
 # Ensure data directory exists for SQLite and set permissions
-RUN mkdir -p /data && chown -R bun:bun /data && chown -R bun:bun /app
+RUN mkdir -p /app/data && chown -R bun:bun /app/data && chown -R bun:bun /app
 
 # Default environment variables
 ENV NODE_ENV=production
-ENV DATABASE_URL=file:/data/netmeter.db
+ENV DATABASE_URL=file:/app/data/netmeter.db
 ENV PORT=3000
 
 USER bun

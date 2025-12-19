@@ -124,22 +124,32 @@ export class NotificationService {
             return null;
         }
 
+        const userName = user.name || user.userName || 'Pelanggan';
+        const userWhatsapp = user.whatsapp || user.phoneNumber;
+        const userId = user.id || user.userId;
+        const billId = bill.id || bill.billId;
+
+        if (!userWhatsapp) {
+            console.error(`[Notification] Missing whatsapp number for user ${userName}`);
+            return null;
+        }
+
         // Apply rate limiting for automatic sends
         if (!isManual) {
             const delay = Math.floor(Math.random() * (5000 - 2000 + 1)) + 2000;
-            console.log(`[Notification] Rate limiting: waiting ${delay}ms before sending BILL to ${user.name}`);
+            console.log(`[Notification] Rate limiting: waiting ${delay}ms before sending BILL to ${userName}`);
             await new Promise(resolve => setTimeout(resolve, delay));
         }
 
         // 1. Check for Duplicate
-        if (await this.hasAlreadySent('BILL', bill.id)) {
-            console.log(`[Notification] Duplicate BILL skipped for bill ${bill.id}`);
+        if (await this.hasAlreadySent('BILL', billId)) {
+            console.log(`[Notification] Duplicate BILL skipped for bill ${billId}`);
             return 'ALREADY_SENT';
         }
 
         // 2. Check for Quiet Hours
         if (this.isWithinQuietHours(appSettings)) {
-            console.log(`[Notification] BILL held for bill ${bill.id} due to quiet hours`);
+            console.log(`[Notification] BILL held for bill ${billId} due to quiet hours`);
             return 'HELD';
         }
 
@@ -153,7 +163,7 @@ export class NotificationService {
         const dayOnly = new Date(createdAt).getDate();
 
         const message = this.processTemplate(template, {
-            name: user.name,
+            name: userName,
             month: monthName,
             year: String(bill.year),
             amount: formattedAmount,
@@ -163,11 +173,11 @@ export class NotificationService {
         });
 
         try {
-            await whatsappService.sendMessage(user.whatsapp, message, 'BILL', user.id, bill.id);
-            console.log(`[Notification] Sent bill for ${user.name}`);
+            await whatsappService.sendMessage(userWhatsapp, message, 'BILL', userId, billId);
+            console.log(`[Notification] Sent bill for ${userName}`);
             return message;
         } catch (e) {
-            console.error(`[Notification] Failed to send to ${user.name}:`, e);
+            console.error(`[Notification] Failed to send to ${userName}:`, e);
             throw e;
         }
     }
@@ -205,22 +215,32 @@ export class NotificationService {
             return null;
         }
 
+        const userName = user.name || user.userName || 'Pelanggan';
+        const userWhatsapp = user.whatsapp || user.phoneNumber;
+        const userId = user.id || user.userId;
+        const billId = bill.id || bill.billId;
+
+        if (!userWhatsapp) {
+            console.error(`[Notification] Missing whatsapp number for user ${userName}`);
+            return null;
+        }
+
         // Apply rate limiting for automatic sends
         if (!isManual) {
             const delay = Math.floor(Math.random() * (5000 - 2000 + 1)) + 2000;
-            console.log(`[Notification] Rate limiting: waiting ${delay}ms before sending RECEIPT to ${user.name || user.userName}`);
+            console.log(`[Notification] Rate limiting: waiting ${delay}ms before sending RECEIPT to ${userName}`);
             await new Promise(resolve => setTimeout(resolve, delay));
         }
 
-        // 1. Check for Duplicate (Optional for receipts, but user asked for maximal 1 notification)
-        if (await this.hasAlreadySent('RECEIPT', bill.id)) {
-            console.log(`[Notification] Duplicate RECEIPT skipped for bill ${bill.id}`);
+        // 1. Check for Duplicate
+        if (await this.hasAlreadySent('RECEIPT', billId)) {
+            console.log(`[Notification] Duplicate RECEIPT skipped for bill ${billId}`);
             return 'ALREADY_SENT';
         }
 
         // 2. Check for Quiet Hours
         if (this.isWithinQuietHours(appSettings)) {
-            console.log(`[Notification] RECEIPT held for bill ${bill.id} due to quiet hours`);
+            console.log(`[Notification] RECEIPT held for bill ${billId} due to quiet hours`);
             return 'HELD';
         }
 
@@ -236,7 +256,7 @@ export class NotificationService {
         const dayOnly = new Date(dateToUse).getDate();
 
         const message = this.processTemplate(template, {
-            name: user.name || user.userName,
+            name: userName,
             month: monthName,
             year: String(bill.year),
             amount: formattedAmount,
@@ -247,11 +267,11 @@ export class NotificationService {
         });
 
         try {
-            await whatsappService.sendMessage(user.whatsapp, message, 'RECEIPT', user.id || user.userId, bill.id || bill.billId);
-            console.log(`[Notification] Sent receipt for ${user.name || user.userName}`);
+            await whatsappService.sendMessage(userWhatsapp, message, 'RECEIPT', userId, billId);
+            console.log(`[Notification] Sent receipt for ${userName}`);
             return message;
         } catch (e) {
-            console.error(`[Notification] Failed to send receipt to ${user.name || user.userName}:`, e);
+            console.error(`[Notification] Failed to send receipt to ${userName}:`, e);
             throw e;
         }
     }
@@ -264,9 +284,19 @@ export class NotificationService {
             return null;
         }
 
+        const userName = user.name || user.userName || 'Pelanggan';
+        const userWhatsapp = user.whatsapp || user.phoneNumber;
+        const userId = user.id || user.userId;
+        const billId = bill.id || bill.billId;
+
+        if (!userWhatsapp) {
+            console.error(`[Notification] Missing whatsapp number for user ${userName}`);
+            return null;
+        }
+
         // Apply rate limiting for reminders (always automatic in this context)
         const delay = Math.floor(Math.random() * (5000 - 2000 + 1)) + 2000;
-        console.log(`[Notification] Rate limiting: waiting ${delay}ms before sending REMINDER to ${user.name || user.userName}`);
+        console.log(`[Notification] Rate limiting: waiting ${delay}ms before sending REMINDER to ${userName}`);
         await new Promise(resolve => setTimeout(resolve, delay));
 
         const appUrl = appSettings.appUrl || '';
@@ -279,7 +309,7 @@ export class NotificationService {
         const dayOnly = new Date(createdAt).getDate();
 
         const message = this.processTemplate(template, {
-            name: user.name || user.userName,
+            name: userName,
             month: monthName,
             year: String(bill.year),
             amount: formattedAmount,
@@ -289,11 +319,11 @@ export class NotificationService {
         });
 
         try {
-            await whatsappService.sendMessage(user.whatsapp, message, 'REMINDER', user.id || user.userId, bill.id);
-            console.log(`[Notification] Sent reminder for ${user.name || user.userName}`);
+            await whatsappService.sendMessage(userWhatsapp, message, 'REMINDER', userId, billId);
+            console.log(`[Notification] Sent reminder for ${userName}`);
             return message;
         } catch (e) {
-            console.error(`[Notification] Failed to send reminder to ${user.name || user.userName}:`, e);
+            console.error(`[Notification] Failed to send reminder to ${userName}:`, e);
             throw e;
         }
     }

@@ -8,8 +8,8 @@ export class WhatsappService {
 
     constructor() {
         // 'whatsapp' is the service name in docker-compose, resolved to its IP
-        this.baseUrl = 'http://whatsapp:3000/api/whatsapp';
-        this.internalSecret = 'INTERNAL_PSK_SECRET';
+        this.baseUrl = process.env.WHATSAPP_URL || 'http://whatsapp:3000/api/whatsapp';
+        this.internalSecret = process.env.WHATSAPP_INTERNAL_SECRET || 'INTERNAL_PSK_SECRET';
     }
 
     private getHeaders() {

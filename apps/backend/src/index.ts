@@ -57,19 +57,19 @@ app.use('/*', cors({
 // Routes
 app.route('/api/auth', auth)
 
-app.use('/api/users/*', jwt({
+app.use('/api/users*', jwt({
     secret: JWT_SECRET
 }))
 app.route('/api/users', usersRoute)
 
 import settingsRoute from './routes/settings'
-app.use('/api/settings/*', jwt({
+app.use('/api/settings*', jwt({
     secret: JWT_SECRET
 }))
 app.route('/api/settings', settingsRoute)
 
 import billsRoute from './routes/bills'
-app.use('/api/bills/*', jwt({
+app.use('/api/bills*', jwt({
     secret: JWT_SECRET
 }))
 app.route('/api/bills', billsRoute)
@@ -83,19 +83,19 @@ app.route('/api/payment', paymentRoute)
 
 
 import whatsappRoute from './routes/whatsapp'
-app.use('/api/whatsapp/*', jwt({
+app.use('/api/whatsapp*', jwt({
     secret: JWT_SECRET
 }))
 app.route('/api/whatsapp', whatsappRoute)
 
 import backupRoute from './routes/backup'
-app.use('/api/backup/*', jwt({
+app.use('/api/backup*', jwt({
     secret: JWT_SECRET
 }))
 app.route('/api/backup', backupRoute)
 
 import reportsRoute from './routes/reports'
-app.use('/api/reports/*', jwt({
+app.use('/api/reports*', jwt({
     secret: JWT_SECRET
 }))
 app.route('/api/reports', reportsRoute)

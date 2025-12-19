@@ -34,6 +34,9 @@ RUN apk --no-cache add ca-certificates && \
 
 COPY --from=builder /app/whatsapp-bot .
 
+# Ensure data directory exists and set permissions
+RUN mkdir -p /app/data && chown -R appuser:appgroup /app/data
+
 USER appuser
 EXPOSE 3000
 
