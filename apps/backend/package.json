@@ -8,6 +8,7 @@
     "dependencies": {
         "@hono/zod-validator": "^0.7.6",
         "@netmeter/db": "workspace:*",
+        "@netmeter/shared": "workspace:*",
         "csv-parse": "^6.1.0",
         "dotenv": "^16.0.0",
         "drizzle-orm": "0.45.1",

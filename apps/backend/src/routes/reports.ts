@@ -3,20 +3,20 @@ import { Hono } from 'hono';
 import { db } from '../db';
 import { bills, payments, users } from '@netmeter/db';
 import { and, between, eq, sql, desc, gte, lte } from 'drizzle-orm';
+import { zValidator } from '@hono/zod-validator';
+import { financialReportSchema } from '@netmeter/shared';
 
 const app = new Hono();
 
 // GET /financial - Usage/Payment Summary for a Date Range
-app.get('/financial', async (c) => {
+app.get('/financial', zValidator('query', financialReportSchema), async (c) => {
     try {
-        const startStr = c.req.query('startDate');
-        const endStr = c.req.query('endDate');
-        const methodFilter = c.req.query('method'); // Optional: 'CASH' | 'TRANSFER' etc.
+        const { startDate: startStr, endDate: endStr, method: methodFilter } = c.req.valid('query');
 
         // Default to current month if not specified
         const now = new Date();
-        const start = startStr ? new Date(startStr) : new Date(now.getFullYear(), now.getMonth(), 1);
-        const end = endStr ? new Date(endStr) : new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+        const start = startStr || new Date(now.getFullYear(), now.getMonth(), 1);
+        const end = endStr || new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
         // 1. Get Payments within range (for Income & Charts)
         let paymentQuery = db.select({

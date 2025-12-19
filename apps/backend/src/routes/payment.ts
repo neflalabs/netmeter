@@ -4,14 +4,15 @@ import { PaymentService } from '../services/payment';
 import { db } from '../db';
 import { bills, users } from '@netmeter/db';
 import { eq } from 'drizzle-orm';
+import { zValidator } from '@hono/zod-validator';
+import { idParamSchema } from '@netmeter/shared';
 
 const app = new Hono();
 
 // Create Snap Token
-app.post('/snap/:billId', async (c) => {
+app.post('/snap/:id', zValidator('param', idParamSchema), async (c) => {
     try {
-        const billId = parseInt(c.req.param('billId'));
-        if (isNaN(billId)) return c.json({ error: 'Invalid Bill ID' }, 400);
+        const { id: billId } = c.req.valid('param');
 
         // Fetch user data for customer details
         const bill = await db.query.bills.findFirst({
@@ -38,10 +39,9 @@ app.post('/snap/:billId', async (c) => {
 });
 
 // Cancel/Reset Transaction
-app.post('/cancel/:billId', async (c) => {
+app.post('/cancel/:id', zValidator('param', idParamSchema), async (c) => {
     try {
-        const billId = parseInt(c.req.param('billId'));
-        if (isNaN(billId)) return c.json({ error: 'Invalid Bill ID' }, 400);
+        const { id: billId } = c.req.valid('param');
 
         const result = await PaymentService.cancelTransaction(billId);
         return c.json(result);

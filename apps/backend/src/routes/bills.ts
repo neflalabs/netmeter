@@ -3,16 +3,17 @@ import { Hono } from 'hono';
 import { db } from '../db';
 import { users, bills, settings, payments } from '@netmeter/db';
 import { eq, and, isNull, ne, desc, or } from 'drizzle-orm';
+import { zValidator } from '@hono/zod-validator';
+import { idParamSchema, manualPaySchema, userIdQuerySchema } from '@netmeter/shared';
 import { whatsappService } from '../services/whatsapp';
 import { NotificationService, MONTH_NAMES, formatDate } from '../services/notification';
 
 const app = new Hono();
 
-
 // GET / - List all bills
-app.get('/', async (c) => {
+app.get('/', zValidator('query', userIdQuerySchema), async (c) => {
     try {
-        const userId = c.req.query('userId');
+        const { userId } = c.req.valid('query');
 
         let query = db.select({
             id: bills.id,
@@ -42,7 +43,7 @@ app.get('/', async (c) => {
             .$dynamic(); // Enable dynamic query building
 
         if (userId) {
-            query = query.where(eq(bills.userId, parseInt(userId)));
+            query = query.where(eq(bills.userId, userId));
         }
 
         const allBills = await query
@@ -139,11 +140,11 @@ app.post('/generate', async (c) => {
 });
 
 // PATCH /:id/pay - Mark bill as PAID
-app.patch('/:id/pay', async (c) => {
+app.patch('/:id/pay', zValidator('param', idParamSchema), zValidator('json', manualPaySchema), async (c) => {
     try {
-        const id = parseInt(c.req.param('id'));
-        const body = await c.req.json().catch(() => ({}));
-        const paidAt = body.paidAt ? new Date(body.paidAt) : new Date();
+        const { id } = c.req.valid('param');
+        const body = c.req.valid('json');
+        const paidAt = body.paidAt || new Date();
         const method = body.method || 'CASH'; // Default to CASH
 
         // 1. Get Bill & User Details
@@ -222,9 +223,9 @@ app.patch('/:id/pay', async (c) => {
 
 
 // POST /:id/notify - Send Bill Notification
-app.post('/:id/notify', async (c) => {
+app.post('/:id/notify', zValidator('param', idParamSchema), async (c) => {
     try {
-        const id = parseInt(c.req.param('id'));
+        const { id } = c.req.valid('param');
 
         // 1. Get Bill & User Details
         const billData = await db.select({
@@ -286,9 +287,9 @@ app.post('/:id/notify', async (c) => {
 });
 
 // POST /:id/payment-notify - Send Payment Receipt Notification
-app.post('/:id/payment-notify', async (c) => {
+app.post('/:id/payment-notify', zValidator('param', idParamSchema), async (c) => {
     try {
-        const id = parseInt(c.req.param('id'));
+        const { id } = c.req.valid('param');
 
         // 1. Get Bill & Payment Details
         const billData = await db.select({

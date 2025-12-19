@@ -3,7 +3,7 @@ import { db } from './db'
 import { users, bills, settings } from '@netmeter/db'
 import { eq, isNull, and } from 'drizzle-orm'
 import { zValidator } from '@hono/zod-validator'
-import { userSchema, idParamSchema } from './schemas'
+import { userSchema, idParamSchema } from '@netmeter/shared'
 
 import { NotificationService } from './services/notification'
 

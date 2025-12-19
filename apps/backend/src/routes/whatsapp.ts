@@ -3,6 +3,8 @@ import { whatsappService } from '../services/whatsapp'
 import { db } from '../db'
 import { whatsappLogs, users } from '@netmeter/db'
 import { desc, eq, sql } from 'drizzle-orm'
+import { zValidator } from '@hono/zod-validator'
+import { paginationSchema, whatsappSendSchema } from '@netmeter/shared'
 
 const app = new Hono()
 
@@ -27,12 +29,9 @@ app.post('/logout', async (c) => {
     return c.json(res)
 })
 
-app.post('/send', async (c) => {
-    const body = await c.req.json()
-    if (!body.phone || !body.message) {
-        return c.json({ error: 'Phone and message are required' }, 400)
-    }
-    const res = await whatsappService.sendMessage(body.phone, body.message, body.type || 'OTHER', body.userId)
+app.post('/send', zValidator('json', whatsappSendSchema), async (c) => {
+    const { phone, message, type, userId } = c.req.valid('json')
+    const res = await whatsappService.sendMessage(phone, message, type || 'OTHER', userId)
     return c.json(res)
 })
 
@@ -41,10 +40,9 @@ app.post('/sync', async (c) => {
     return c.json(res)
 })
 
-app.get('/logs', async (c) => {
+app.get('/logs', zValidator('query', paginationSchema), async (c) => {
     try {
-        const page = parseInt(c.req.query('page') || '1')
-        const limit = parseInt(c.req.query('limit') || '5')
+        const { page, limit } = c.req.valid('query')
         const offset = (page - 1) * limit
 
         // 1. Get total logs count for pagination

@@ -5,7 +5,7 @@ import { settings, bills } from '@netmeter/db';
 import { eq } from 'drizzle-orm';
 
 import { zValidator } from '@hono/zod-validator';
-import { settingsSchema } from '../schemas';
+import { settingsSchema } from '@netmeter/shared';
 
 const app = new Hono();
 

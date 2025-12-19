@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { sign } from 'hono/jwt'
 import { zValidator } from '@hono/zod-validator'
-import { authSchema } from './schemas'
+import { authSchema } from '@netmeter/shared'
 
 const app = new Hono()
 
