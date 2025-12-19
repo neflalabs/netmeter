@@ -1,0 +1,26 @@
+{
+    "name": "netmeter-monorepo",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "dev": "bun run --filter '*' dev",
+        "build": "bun run --filter '*' build",
+        "lint": "bun run --filter '*' lint",
+        "db:migrate": "docker compose exec backend bun run /app/packages/db/migrate.ts",
+        "db:wipe": "docker compose exec backend bun run /app/packages/db/wipe.ts",
+        "db:generate": "bun run --filter @netmeter/db generate",
+        "db:push": "bun run --filter @netmeter/db migrate",
+        "db:squash": "bun run --filter @netmeter/db squash"
+    },
+    "workspaces": [
+        "apps/*",
+        "packages/*"
+    ],
+    "dependencies": {
+        "drizzle-orm": "^0.45.1",
+        "hono": "^4.11.1"
+    },
+    "devDependencies": {
+        "drizzle-kit": "^0.31.8"
+    }
+}

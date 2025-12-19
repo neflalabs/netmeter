@@ -1,0 +1,54 @@
+# Common
+node_modules/
+dist/
+dist-ssr/
+*.local
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Bun
+bun.lockb
+bun.lock
+
+# Go (wa-bot)
+apps/wa-bot/whatsapp-bot
+apps/wa-bot/data/
+apps/wa-bot/vendor/
+
+# Database
+data/
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+bun-debug.log*
+
+# Testing
+/coverage
+/.nyc_output
+
+# PWA
+public/sw.js
+public/workbox-*.js
+TaskDev

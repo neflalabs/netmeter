@@ -1,0 +1,44 @@
+name: netmeter-prod
+
+services:
+  backend:
+    container_name: netmeter-backend
+    # Replace <github-username> with your actual GitHub username
+    image: ghcr.io/<github-username>/netmeter-backend:latest
+    restart: unless-stopped
+    volumes:
+      - ./data:/data
+    environment:
+      - DATABASE_URL=file:/data/netmeter.db
+      - NODE_ENV=production
+      # - JWT_SECRET=your-secret-here
+      # - FRONTEND_URL=https://net.yourdomain.com
+    # env_file: .env # Create this file for secure secrets
+    healthcheck:
+      test: ["CMD", "bun", "-e", "fetch('http://localhost:3000/health').then(r => r.ok ? process.exit(0) : process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    container_name: netmeter-frontend
+    image: ghcr.io/<github-username>/netmeter-frontend:latest
+    restart: unless-stopped
+    ports:
+      - "8004:80"
+    depends_on:
+      - backend
+    networks:
+      - default
+      - proxynpm
+
+  whatsapp:
+    container_name: netmeter-whatsapp
+    image: ghcr.io/<github-username>/netmeter-whatsapp:latest
+    restart: unless-stopped
+    volumes:
+      - ./apps/wa-bot/data:/root/data
+
+networks:
+  proxynpm:
+    external: true

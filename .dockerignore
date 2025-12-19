@@ -1,0 +1,13 @@
+node_modules
+dist
+.git
+.env
+data
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+TaskDev
+.vscode
+.idea
+.gemini

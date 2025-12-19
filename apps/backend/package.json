@@ -1,0 +1,23 @@
+{
+    "name": "backend",
+    "scripts": {
+        "dev": "bun run --watch src/index.ts",
+        "start": "bun run src/index.ts",
+        "build": "echo 'No build step needed for Bun'"
+    },
+    "dependencies": {
+        "@hono/zod-validator": "^0.7.6",
+        "@netmeter/db": "workspace:*",
+        "csv-parse": "^6.1.0",
+        "dotenv": "^16.0.0",
+        "drizzle-orm": "0.45.1",
+        "hono": "^4.11.1",
+        "node-cron": "^4.2.1",
+        "zod": "^4.2.1"
+    },
+    "devDependencies": {
+        "@types/bun": "latest",
+        "@types/node": "^25.0.3",
+        "@types/node-cron": "^3.0.11"
+    }
+}

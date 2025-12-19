@@ -1,0 +1,19 @@
+{
+    "name": "@netmeter/db",
+    "version": "0.0.0",
+    "main": "./src/index.ts",
+    "types": "./src/index.ts",
+    "scripts": {
+        "generate": "drizzle-kit generate",
+        "migrate": "bun run migrate.ts",
+        "squash": "rm -rf drizzle/*.sql drizzle/meta && drizzle-kit generate --name squashed_initial"
+    },
+    "dependencies": {
+        "drizzle-orm": "^0.45.1"
+    },
+    "devDependencies": {
+        "@types/bun": "latest",
+        "@types/node": "^25.0.2",
+        "drizzle-kit": "^0.31.8"
+    }
+}
