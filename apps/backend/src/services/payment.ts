@@ -112,9 +112,14 @@ export class PaymentService {
 
         const authString = btoa(config.midtransServerKey + ':');
         const isProduction = config.midtransEnvironment === 'production';
-        const baseUrl = isProduction
+        const baseUrlMidtrans = isProduction
             ? 'https://app.midtrans.com/snap/v1/transactions'
             : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
+
+        const baseUrl = config.appUrl || process.env.FRONTEND_URL?.split(',')[0] || '';
+        const redirectUrl = bill.paymentToken
+            ? `${baseUrl.replace(/\/$/, '')}/pay/${bill.paymentToken}`
+            : `${baseUrl.replace(/\/$/, '')}/bills`;
 
         const payload = {
             transaction_details: {
@@ -132,10 +137,15 @@ export class PaymentService {
                     quantity: 1,
                     name: `WiFi ${bill.month}/${bill.year}`
                 }
-            ]
+            ],
+            callbacks: {
+                finish: redirectUrl,
+                unfinish: redirectUrl,
+                error: redirectUrl
+            }
         };
 
-        const response = await fetch(baseUrl, {
+        const response = await fetch(baseUrlMidtrans, {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',

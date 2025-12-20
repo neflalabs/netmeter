@@ -153,7 +153,7 @@ export class NotificationService {
             return 'HELD';
         }
 
-        const appUrl = appSettings.appUrl || '';
+        const appUrl = appSettings.appUrl || process.env.FRONTEND_URL?.split(',')[0] || '';
         const template = appSettings.billTemplate || '';
 
         const formattedAmount = new Intl.NumberFormat('id-ID').format(bill.amount);
@@ -244,7 +244,7 @@ export class NotificationService {
             return 'HELD';
         }
 
-        const appUrl = appSettings.appUrl || '';
+        const appUrl = appSettings.appUrl || process.env.FRONTEND_URL?.split(',')[0] || '';
         const template = appSettings.paymentTemplate || '';
 
         const amountToUse = paymentAmount || bill.amount;
@@ -299,7 +299,7 @@ export class NotificationService {
         console.log(`[Notification] Rate limiting: waiting ${delay}ms before sending REMINDER to ${userName}`);
         await new Promise(resolve => setTimeout(resolve, delay));
 
-        const appUrl = appSettings.appUrl || '';
+        const appUrl = appSettings.appUrl || process.env.FRONTEND_URL?.split(',')[0] || '';
         const template = appSettings.reminderTemplate || '';
 
         const formattedAmount = new Intl.NumberFormat('id-ID').format(bill.amount);

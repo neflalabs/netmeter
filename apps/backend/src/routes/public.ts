@@ -36,9 +36,14 @@ app.get('/bills', async (c) => {
 // GET /:token - Get Bill Details by Token
 app.get('/bills/:token', zValidator('param', tokenParamSchema), async (c) => {
     try {
-        const { token } = c.req.valid('param');
-
         // 1. Find Bill by Token
+        const rawToken = c.req.valid('param').token;
+        const token = rawToken?.trim();
+
+        if (!token) {
+            return c.json({ error: 'Token is required' }, 400);
+        }
+
         const billData = await db.select({
             id: bills.id,
             month: bills.month,
@@ -54,10 +59,11 @@ app.get('/bills/:token', zValidator('param', tokenParamSchema), async (c) => {
             issuer: payments.issuer, // Bank name or wallet (e.g. bca, gopay)
             gatewayStatus: payments.gatewayStatus,
             paymentStatus: payments.status,
-            currency: payments.currency
+            currency: payments.currency,
+            userId: bills.userId // For diagnostic logging
         })
             .from(bills)
-            .innerJoin(users, eq(bills.userId, users.id))
+            .leftJoin(users, eq(bills.userId, users.id)) // Use leftJoin to see if bill exists but user is missing
             .leftJoin(payments, and(
                 eq(payments.billId, bills.id),
                 ne(payments.status, 'REJECTED')
@@ -67,10 +73,16 @@ app.get('/bills/:token', zValidator('param', tokenParamSchema), async (c) => {
             .limit(1);
 
         if (billData.length === 0) {
+            console.warn(`[Public-Bill] Bill not found for token: "${token}" (original: "${rawToken}")`);
             return c.json({ error: 'Invoice not found' }, 404);
         }
 
         const bill = billData[0];
+
+        if (!bill.userName) {
+            console.error(`[Public-Bill] Bill ${bill.id} found but user ${bill.userId} is missing!`);
+            return c.json({ error: 'Data integrity error: User not found for this bill.' }, 404);
+        }
 
         // 2. Get Admin Info (Bank Details) for Transfer
         // For now hardcoded or fetched from settings notes? 
