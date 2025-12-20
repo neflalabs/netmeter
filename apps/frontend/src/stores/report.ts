@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { useApi } from '@/composables/useApi'
+import { reportsApi } from '@/api/reports'
 
 export const useReportStore = defineStore('report', () => {
-    const { get } = useApi()
+    const api = reportsApi()
 
     // State
     const financialData = ref<any>({
@@ -22,8 +22,7 @@ export const useReportStore = defineStore('report', () => {
     async function fetchFinancial(startDate: string, endDate: string) {
         isFetchingFinancial.value = true
         try {
-            const query = new URLSearchParams({ startDate, endDate })
-            const data = await get(`/reports/financial?${query}`)
+            const data = await api.getFinancial(startDate, endDate)
             financialData.value = data
             return data
         } finally {
@@ -34,7 +33,7 @@ export const useReportStore = defineStore('report', () => {
     async function fetchBehavior() {
         isFetchingBehavior.value = true
         try {
-            const data = await get('/reports/payment-dates')
+            const data = await api.getPaymentDates()
             behaviorData.value = data
             return data
         } finally {
