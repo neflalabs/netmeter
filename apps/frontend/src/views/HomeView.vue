@@ -113,10 +113,6 @@ const yearData = computed(() => {
                 <LayoutDashboard class="w-4 h-4 mr-2" />
                 Dashboard
             </Button>
-            <Button v-else size="sm" variant="outline" @click="router.push('/login')">
-                <LogIn class="w-4 h-4 mr-2" />
-                Login
-            </Button>
         </template>
     </Header>
 
