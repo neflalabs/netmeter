@@ -3,6 +3,7 @@ import { ArrowLeft } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import Button from '@/components/ui/Button.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
+import AppLogo from '@/components/AppLogo.vue'
 
 const props = defineProps<{
   title?: string
@@ -36,7 +37,10 @@ const handleBack = () => {
                     <ArrowLeft class="w-5 h-5" />
                 </Button>
                 
-                <div>
+                <div v-if="title === 'NetMeter' || title === 'Login netmeter'">
+                    <AppLogo />
+                </div>
+                <div v-else>
                     <!-- Title Slot or Prop -->
                     <slot name="title">
                         <h1 v-if="title" class="font-bold text-lg text-foreground leading-tight">

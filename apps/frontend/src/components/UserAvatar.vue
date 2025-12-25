@@ -13,19 +13,21 @@
 import { computed } from 'vue'
 
 const props = withDefaults(defineProps<{
-    name: string
-    size?: 'sm' | 'md' | 'lg'
+  name: string
+  size?: 'xs' | 'sm' | 'md' | 'lg'
 }>(), {
-    size: 'md'
+  size: 'md'
 })
 
 const sizeClasses = {
+    xs: 'w-4 h-4',
     sm: 'w-6 h-6',
     md: 'w-8 h-8',
     lg: 'w-10 h-10'
 }
 
 const textSize = {
+    xs: 'text-[8px]',
     sm: 'text-[10px]',
     md: 'text-xs',
     lg: 'text-sm'

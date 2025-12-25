@@ -1,13 +1,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { Wifi } from 'lucide-vue-next';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 import Footer from '@/components/Footer.vue';
 import Toaster from '@/components/ui/Toaster.vue';
+import AppLogo from '@/components/AppLogo.vue';
 
 const appSettings = ref({
     appTitle: 'NetMeter',
+    appSubtitle: '',
     adminPhoneNumber: ''
 });
 
@@ -18,6 +19,7 @@ onMounted(async () => {
             const data = await res.json();
             appSettings.value = {
                 appTitle: data.appTitle || 'NetMeter',
+                appSubtitle: data.appSubtitle || '',
                 adminPhoneNumber: data.adminPhoneNumber || ''
             };
         }
@@ -32,14 +34,9 @@ onMounted(async () => {
         <!-- Header -->
         <header class="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border px-4 py-3">
             <div class="container mx-auto flex justify-between items-center">
-                <router-link to="/" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                    <div class="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center">
-                        <Wifi class="w-5 h-5" />
-                    </div>
-                    <div>
-                        <h1 class="font-bold text-lg text-foreground leading-tight">{{ appSettings.appTitle }}</h1>
-                    </div>
-                </router-link>
+                <div>
+                    <AppLogo :title="appSettings.appTitle" :subtitle="appSettings.appSubtitle" />
+                </div>
                  <div class="flex gap-2 items-center">
                     <ThemeToggle />
                 </div>

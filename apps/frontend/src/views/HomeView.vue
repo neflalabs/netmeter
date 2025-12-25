@@ -8,6 +8,7 @@ import Header from '@/components/Header.vue'
 import AnnouncementBanner from '@/components/AnnouncementBanner.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import UserAvatarStack from '@/components/UserAvatarStack.vue'
+import AppLogo from '@/components/AppLogo.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
@@ -105,12 +106,7 @@ const yearData = computed(() => {
     <!-- Navbar / Header -->
     <Header>
         <template #title>
-             <h1 class="font-bold text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                {{ appSettings.title }}
-            </h1>
-        </template>
-        <template #subtitle>
-            {{ appSettings.subtitle }}
+             <AppLogo :title="appSettings.title" :subtitle="appSettings.subtitle" />
         </template>
         <template #actions>
             <Button v-if="isLoggedIn" size="sm" variant="outline" @click="router.push('/dashboard')">
