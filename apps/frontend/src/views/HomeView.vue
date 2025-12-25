@@ -5,7 +5,9 @@ import { CheckCircle2, LogIn, ChevronDown, ChevronUp, LayoutDashboard } from 'lu
 import Button from '@/components/ui/Button.vue'
 import Footer from '@/components/Footer.vue'
 import Header from '@/components/Header.vue'
-import StatsCard from '@/components/StatsCard.vue'
+import AnnouncementBanner from '@/components/AnnouncementBanner.vue'
+import UserAvatar from '@/components/UserAvatar.vue'
+import UserAvatarStack from '@/components/UserAvatarStack.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
@@ -26,6 +28,10 @@ const fetchSettings = async () => {
                 appSettings.value.title = data.appTitle
                 appSettings.value.subtitle = data.appSubtitle
                 appSettings.value.listingPerHome = data.listingPerHome
+                appSettings.value.announcementTitle = data.announcementTitle
+                appSettings.value.announcementMessage = data.announcementMessage
+                appSettings.value.announcementType = data.announcementType
+                appSettings.value.announcementActive = data.announcementActive
             }
         }
     } catch (e) {
@@ -119,104 +125,104 @@ const yearData = computed(() => {
     </Header>
 
     <section class="container mx-auto px-4 pt-6 max-w-2xl">
-        <div class="grid grid-cols-2 gap-3">
-             <!-- Data Usage Card -->
-             <StatsCard title="Data Usage">
-                <template #icon>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="m17 5-5-3-5 3"/><path d="m17 19-5 3-5-3"/></svg>
-                </template>
-                <div class="flex items-baseline">
-                    <span class="text-2xl font-bold text-foreground">450.5</span>
-                    <span class="text-sm text-muted-foreground ml-1">GB</span>
-                </div>
-                <template #footer>
-                     <div class="w-full bg-secondary rounded-full h-1.5 mt-1">
-                        <div class="bg-blue-600 h-1.5 rounded-full" style="width: 45%"></div>
-                    </div>
-                </template>
-            </StatsCard>
-
-            <!-- Network Status Card -->
-            <StatsCard title="Network" variant="success">
-                <template #icon>
-                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                </template>
-                <div class="flex items-center gap-1.5">
-                     <span class="relative flex h-2.5 w-2.5">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
-                    </span>
-                    <span class="text-sm font-medium text-green-600">Online</span>
-                </div>
-                
-                <template #footer>
-                     <div class="flex justify-between items-end mt-1">
-                         <div class="text-xs text-muted-foreground">Uptime: 14d 2h</div>
-                         <div>
-                            <span class="text-lg font-bold text-foreground">12</span>
-                            <span class="text-[10px] text-muted-foreground ml-0.5">ms</span>
-                         </div>
-                     </div>
-                </template>
-            </StatsCard>
-        </div>
+        <AnnouncementBanner 
+            :active="appSettings.announcementActive"
+            :title="appSettings.announcementTitle"
+            :message="appSettings.announcementMessage"
+            :type="appSettings.announcementType"
+        />
     </section>
 
     <!-- Main Content (Timeline) -->
     <main class="container mx-auto px-4 py-6 max-w-2xl">
         <div class="flex flex-col gap-3">
             <template v-for="(month, idx) in yearData" :key="idx">
-                <!-- Expanded Card (Current/Selected) -->
+                <!-- Expanded Card (Hero / Selected Month) -->
                 <div 
                     v-if="expandedMonth === month.name"
-                    class="rounded-xl border border-blue-200 bg-card shadow-sm ring-2 ring-blue-100 transition-all duration-300 dark:ring-blue-900"
+                    class="rounded-2xl border-2 border-blue-500/20 bg-card shadow-lg ring-4 ring-blue-500/5 transition-all duration-300 dark:border-blue-500/30 overflow-hidden"
                 >
                     <div 
-                        class="p-6 pb-3 flex items-center justify-between cursor-pointer"
+                        class="p-6 pb-4 flex items-center justify-between cursor-pointer bg-gradient-to-r from-blue-50 to-transparent dark:from-blue-900/5"
                         @click="toggleMonth(month.name)"
                     >
-                        <div class="flex items-center gap-3">
-                            <h3 class="text-xl font-bold text-foreground">{{ month.name }} {{ currentYear }}</h3>
-                             <span v-if="month.users.length > 0" class="text-xs font-medium px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full">
-                                {{ month.users.length }} Lunas
-                            </span>
-                            <span v-else class="text-xs font-medium px-2 py-1 bg-secondary text-muted-foreground rounded-full">
-                                Pending
-                            </span>
-                        </div>
-                        <ChevronUp class="w-5 h-5 text-muted-foreground" />
-                    </div>
-                    
-                    <div class="p-6 pt-0 animate-in slide-in-from-top-2 duration-200">
-                        <div v-if="month.users.length > 0" class="flex flex-col gap-2">
-                             <div v-for="user in month.users" :key="user" class="flex items-center justify-between text-sm text-foreground bg-secondary/50 p-3 rounded-lg border border-border">
-                                <span class="font-medium flex items-center">
-                                    <CheckCircle2 class="w-4 h-4 text-green-500 mr-2" />
-                                    {{ user }}
-                                </span>
-                                <span class="text-xs text-muted-foreground">Lunas</span>
+                        <div class="flex items-center gap-4">
+                            <div class="p-3 bg-blue-500 rounded-xl shadow-blue-500/20 shadow-lg text-white">
+                                <span class="font-bold text-lg leading-none">{{ month.name.substring(0, 3) }}</span>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-extrabold text-foreground tracking-tight">{{ month.name }} {{ currentYear }}</h3>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                     <span v-if="month.name === currentMonthName" class="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>
+                                     <span class="text-[10px] uppercase tracking-wider font-bold text-blue-600 dark:text-blue-400">
+                                         {{ month.name === currentMonthName ? 'Bulan Ini' : 'Arsip' }}
+                                     </span>
+                                </div>
                             </div>
                         </div>
-                        <div v-else class="flex flex-col items-center justify-center py-8 text-center border-2 border-dashed border-border rounded-lg">
-                            <p class="text-sm text-muted-foreground font-medium">Belum ada pembayaran</p>
-                            <p class="text-xs text-muted-foreground mt-1">Tagihan untuk bulan ini belum ada yang lunas.</p>
+                        <div class="flex items-center gap-3">
+                            <span v-if="month.users.length > 0" class="text-xs font-bold px-3 py-1 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 rounded-lg">
+                                {{ month.users.length }} Lunas
+                            </span>
+                             <ChevronUp class="w-5 h-5 text-muted-foreground" />
+                        </div>
+                    </div>
+                    
+                    <div class="p-6 pt-2 animate-in slide-in-from-top-4 duration-300">
+                        <div v-if="month.users.length > 0" class="flex flex-col gap-3">
+                             <div v-for="(user, idx) in month.users" :key="user" 
+                                  class="flex items-center justify-between text-sm text-foreground bg-secondary/30 p-4 rounded-xl border border-border/50 group hover:border-blue-500/30 hover:bg-secondary transition-all duration-200"
+                                  :style="{ animationDelay: `${idx * 50}ms` }"
+                             >
+                                <span class="font-bold flex items-center gap-3">
+                                    <UserAvatar :name="user" size="md" />
+                                    {{ user }}
+                                </span>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-bold text-green-600 dark:text-green-400 bg-green-500/10 px-2 py-0.5 rounded-full">LUNAS</span>
+                                    <CheckCircle2 class="w-5 h-5 text-green-500" />
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Premium Empty State -->
+                        <div v-else class="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-muted rounded-2xl bg-muted/5">
+                            <div class="relative mb-4">
+                                <div class="absolute inset-0 bg-blue-500/10 blur-2xl rounded-full"></div>
+                                <div class="relative w-20 h-20 bg-card rounded-3xl border border-border flex items-center justify-center shadow-sm">
+                                    <CheckCircle2 class="w-10 h-10 text-muted-foreground/20" />
+                                </div>
+                            </div>
+                            <h4 class="text-base font-bold text-foreground">Hening Sekali...</h4>
+                            <p class="text-xs text-muted-foreground mt-2 max-w-[240px] leading-relaxed">
+                                Belum ada kontribusi untuk bulan ini. Jadilah pahlawan WiFi pertama hari ini! 🚀
+                            </p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Collapsed Row (Compact) -->
+                <!-- Collapsed Row (Grouped) -->
                 <div 
                     v-else
-                    class="group flex items-center justify-between p-4 rounded-lg border border-border bg-card hover:bg-secondary/50 cursor-pointer transition-all duration-200 hover:border-ring/30"
+                    class="group flex items-center justify-between p-5 rounded-2xl border border-border bg-card hover:bg-secondary/30 cursor-pointer transition-all duration-200 hover:border-blue-500/30 hover:shadow-sm"
                     @click="toggleMonth(month.name)"
                 >
                     <div class="flex items-center gap-4">
-                        <span class="w-8 h-[1px] bg-border group-hover:bg-muted-foreground transition-colors"></span> <!-- The 'dash' visual -->
-                        <span class="font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                            {{ month.name }} {{ currentYear }}
-                        </span>
+                        <div class="w-1.5 h-10 rounded-full bg-secondary group-hover:bg-blue-500 transition-colors"></div>
+                        <div>
+                            <h3 class="font-bold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                {{ month.name }} {{ currentYear }}
+                            </h3>
+                            <p class="text-xs text-muted-foreground mt-0.5">
+                                {{ month.users.length > 0 ? `${month.users.length} kontribusi berhasil` : 'Belum ada kontribusi' }}
+                            </p>
+                        </div>
                     </div>
-                    <ChevronDown class="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    
+                    <div class="flex items-center gap-4">
+                         <UserAvatarStack v-if="month.users.length > 0" :users="month.users" :limit="3" />
+                         <ChevronDown class="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    </div>
                 </div>
             </template>
         </div>

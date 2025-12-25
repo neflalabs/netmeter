@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { Plus, CreditCard, LogOut, Users, MoreHorizontal, Settings, Receipt, CheckCircle2, Clock, MessageCircle, Send, TrendingUp } from 'lucide-vue-next'
+import { Plus, CreditCard, LogOut, Users, MoreHorizontal, Settings, Receipt, CheckCircle2, Clock, MessageCircle, Send, TrendingUp, Megaphone } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
@@ -153,6 +153,10 @@ onUnmounted(() => {
 
             <Button size="sm" variant="outline" class="pl-2" @click="$router.push('/stats')">
                 <TrendingUp class="w-4 h-4 mr-1" /> Stats
+            </Button>
+
+            <Button size="sm" variant="outline" class="pl-2" @click="$router.push('/announcement')">
+                <Megaphone class="w-4 h-4 mr-1" /> Pengumuman
             </Button>
 
             <Button size="sm" variant="outline" class="pl-2" @click="$router.push('/settings')">

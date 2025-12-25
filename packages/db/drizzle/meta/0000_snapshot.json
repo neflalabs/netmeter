@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "ca04571e-1054-4940-94d1-ee6f37e4bb15",
+  "id": "8749fa5b-813c-49aa-ab26-781c1c04ab83",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "bills": {
@@ -370,6 +370,38 @@
           "notNull": true,
           "autoincrement": false,
           "default": 6
+        },
+        "announcement_title": {
+          "name": "announcement_title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'Pengumuman'"
+        },
+        "announcement_message": {
+          "name": "announcement_message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "announcement_type": {
+          "name": "announcement_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'INFO'"
+        },
+        "announcement_active": {
+          "name": "announcement_active",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
         },
         "bill_template": {
           "name": "bill_template",

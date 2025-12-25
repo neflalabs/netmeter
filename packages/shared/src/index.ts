@@ -27,6 +27,12 @@ export const settingsSchema = z.object({
     appSubtitle: z.string().optional().nullable(),
     appUrl: z.string().url().or(z.string().length(0)).optional().nullable(),
     listingPerHome: z.number().int().positive().optional().nullable(),
+    announcementTitle: z.string().optional().nullable(),
+    announcementMessage: z.string().optional().nullable(),
+    announcementType: z.enum(['INFO', 'WARNING', 'SUCCESS', 'DANGER']).optional().nullable(),
+    announcementActive: z.boolean().optional().nullable(),
+
+
     billTemplate: z.string().optional().nullable(),
     paymentTemplate: z.string().optional().nullable(),
     reminderTemplate: z.string().optional().nullable(),

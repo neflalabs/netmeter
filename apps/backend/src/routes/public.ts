@@ -114,6 +114,13 @@ app.get('/settings', async (c) => {
             qrisPaymentEnabled: settings.qrisPaymentEnabled,
             manualPaymentDetails: settings.manualPaymentDetails,
 
+            // Announcement
+            announcementTitle: settings.announcementTitle,
+            announcementMessage: settings.announcementMessage,
+            announcementType: settings.announcementType,
+            announcementActive: settings.announcementActive,
+
+
             // Midtrans Public Config
             midtransEnabled: settings.midtransEnabled,
             midtransClientKey: settings.midtransClientKey,

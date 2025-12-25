@@ -6,6 +6,13 @@ export interface Settings {
     appSubtitle: string
     appUrl?: string
     listingPerHome: number
+
+    // Announcement
+    announcementTitle?: string
+    announcementMessage?: string
+    announcementType?: 'INFO' | 'WARNING' | 'SUCCESS' | 'DANGER'
+    announcementActive?: boolean
+
     billTemplate?: string
     paymentTemplate?: string
 
@@ -46,6 +53,12 @@ export interface UpdateSettingsDTO {
     appSubtitle?: string
     appUrl?: string
     listingPerHome?: number
+    announcementTitle?: string
+    announcementMessage?: string
+    announcementType?: 'INFO' | 'WARNING' | 'SUCCESS' | 'DANGER'
+    announcementActive?: boolean
+
+
     billTemplate?: string
     paymentTemplate?: string
 

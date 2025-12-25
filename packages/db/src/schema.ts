@@ -35,6 +35,13 @@ export const settings = sqliteTable('settings', {
     appSubtitle: text('app_subtitle').default('Cara baru patungan WiFi'),
     appUrl: text('app_url').default(''), // Public URL for links/webhooks
     listingPerHome: integer('listing_per_home').notNull().default(6), // Limit listings on homepage
+
+    // Announcement Configuration
+    announcementTitle: text('announcement_title').default('Pengumuman'),
+    announcementMessage: text('announcement_message').default(''),
+    announcementType: text('announcement_type', { enum: ['INFO', 'WARNING', 'SUCCESS', 'DANGER'] }).default('INFO'),
+    announcementActive: integer('announcement_active', { mode: 'boolean' }).default(false),
+
     billTemplate: text('bill_template').default('Assalamualaikum {name}, patungan bulan {month} / {year} sebesar Rp. {amount} sudah bisa dibayar.{br} Untuk membayar secara otomatis, klik di sini: {link} {br}{br} Pesan ini dikirim otomatis oleh aplikasi.'),
     paymentTemplate: text('payment_template').default('Assalamualaikum {name}, patungan sebesar Rp. {amount} via {method} sudah diterima. detailnya bisa cek disini : {link} {br} Maturnuwun! {br}{br} Pesan ini dikirim otomatis oleh aplikasi.'),
     reminderTemplate: text('reminder_template').default('Assalamualaikum {name}, sekadar mengingatkan patungan WiFi bulan {month} / {year} sebesar Rp. {amount} belum lunas. Jika sudah bayar, abaikan pesan ini: {link} {br}{br} Pesan ini dikirim otomatis oleh aplikasi.'),
