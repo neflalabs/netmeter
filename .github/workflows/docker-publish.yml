@@ -28,10 +28,7 @@ jobs:
             context: .
             dockerfile: apps/frontend/Dockerfile
             image: frontend
-          - service: whatsapp
-            context: ./apps/wa-bot
-            dockerfile: apps/wa-bot/Dockerfile
-            image: whatsapp
+
 
     steps:
       - name: Checkout repository
