@@ -13,7 +13,6 @@ export interface Settings {
     manualPaymentEnabled?: boolean
     qrisPaymentEnabled?: boolean
     manualPaymentDetails?: string;
-    qrisStaticImage?: string;
 
     midtransEnabled?: boolean;
     midtransServerKey?: string;
@@ -25,6 +24,9 @@ export interface Settings {
     globalDueDay?: number;
     globalReminderInterval?: number;
     waEnabled?: boolean;
+    waServiceUrl?: string;
+    waApiKey?: string;
+    waInstanceId?: string;
     autoNotifyNewBill?: boolean;
     autoNotifyPaymentSuccess?: boolean;
     autoReminderEnabled?: boolean;
@@ -51,7 +53,7 @@ export interface UpdateSettingsDTO {
     manualPaymentEnabled?: boolean
     qrisPaymentEnabled?: boolean
     manualPaymentDetails?: string;
-    qrisStaticImage?: string;
+    qrisRawString?: string;
 
     midtransEnabled?: boolean;
     midtransServerKey?: string;
@@ -63,6 +65,9 @@ export interface UpdateSettingsDTO {
     globalDueDay?: number;
     globalReminderInterval?: number;
     waEnabled?: boolean;
+    waServiceUrl?: string;
+    waApiKey?: string;
+    waInstanceId?: string;
     autoNotifyNewBill?: boolean;
     autoNotifyPaymentSuccess?: boolean;
     autoReminderEnabled?: boolean;

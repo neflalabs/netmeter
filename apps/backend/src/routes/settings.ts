@@ -28,6 +28,8 @@ app.get('/', async (c) => {
 app.put('/', zValidator('json', settingsSchema), async (c) => {
     try {
         const body = c.req.valid('json');
+        console.log('[Settings] PUT request body:', JSON.stringify(body, null, 2));
+
         const storedSettings = await db.select().from(settings).limit(1);
 
         const values = {
@@ -35,12 +37,15 @@ app.put('/', zValidator('json', settingsSchema), async (c) => {
             updatedAt: new Date(),
         };
 
+        console.log('[Settings] Values to save:', JSON.stringify(values, null, 2));
+
         if (storedSettings.length === 0) {
             // Create first record
             const newSettings = await db.insert(settings).values({
                 singleton: 1, // Singleton pattern
                 ...values,
             }).returning();
+            console.log('[Settings] Created new settings:', newSettings[0]);
             return c.json(newSettings[0]);
         } else {
             // Update existing

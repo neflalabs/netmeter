@@ -13,9 +13,13 @@
             <StatsCard 
                 title="WhatsApp API" 
                 :icon="MessageCircle" 
-                :variant="waStatus === 'CONNECTED' ? 'success' : 'danger'"
+                :variant="waCardVariant"
             >
-                <div v-if="waStatus === 'CONNECTED'">
+                <div v-if="!form.waEnabled" class="flex items-center gap-2">
+                    Disabled
+                    <XCircle class="w-6 h-6" />
+                </div>
+                <div v-else-if="waStatus === 'CONNECTED'">
                     <div class="text-xl font-bold truncate">{{ waUser?.name || 'WhatsApp User' }}</div>
                 </div>
                 <div v-else class="flex items-center gap-2">
@@ -23,7 +27,7 @@
                     <XCircle class="w-6 h-6" />
                 </div>
 
-                <template #footer v-if="waStatus === 'CONNECTED'">
+                <template #footer v-if="form.waEnabled && waStatus === 'CONNECTED'">
                     <div class="flex items-center gap-1 mt-1">
                          <div class="text-xs font-mono bg-white/20 px-1 rounded">
                             +{{ waUser?.id }}
@@ -69,12 +73,12 @@
 
 
                 <!-- WhatsApp Bot Tab -->
-                <WhatsappTab v-if="activeTab === 'whatsapp'" :form="form" />
+                <WhatsappBotTab v-if="activeTab === 'whatsapp'" :form="form" />
 
                 <!-- Payment Gateway Tab -->
                 <PaymentTab v-if="activeTab === 'payment'" :form="form" />
 
-                <!-- Notification Tab (Mock) -->
+                <!-- Notification Tab -->
                 <NotificationTab v-if="activeTab === 'notifications'" :form="form" />
 
                 <!-- Backup Tab -->
@@ -126,7 +130,7 @@ const whatsappStore = useWhatsappStore()
 
 // Tabs Components
 import GeneralTab from '@/components/settings/GeneralTab.vue'
-import WhatsappTab from '@/components/settings/WhatsappTab.vue'
+import WhatsappBotTab from '@/components/settings/WhatsappBotTab.vue'
 import PaymentTab from '@/components/settings/PaymentTab.vue'
 import NotificationTab from '@/components/settings/NotificationTab.vue'
 import BackupTab from '@/components/settings/BackupTab.vue'
@@ -153,7 +157,6 @@ const form = ref<UpdateSettingsDTO>({
   manualPaymentEnabled: true,
   qrisPaymentEnabled: false,
   manualPaymentDetails: '',
-  qrisStaticImage: '',
   midtransEnabled: false,
   midtransClientKey: '',
   midtransServerKey: '',
@@ -162,6 +165,9 @@ const form = ref<UpdateSettingsDTO>({
   globalDueDay: 10,
   globalReminderInterval: 3,
   waEnabled: false,
+  waServiceUrl: 'http://localhost:3030/api/v1',
+  waApiKey: '',
+  waInstanceId: 'main',
   autoNotifyNewBill: false,
   autoNotifyPaymentSuccess: false,
   autoReminderEnabled: false,
@@ -189,22 +195,44 @@ const fetchWaStatus = async () => {
     }
 }
 
+const waCardVariant = computed(() => {
+    if (!form.value.waEnabled) return 'secondary'
+    return waStatus.value === 'CONNECTED' ? 'success' : 'danger'
+})
+
 const paymentStatusVariant = computed(() => {
-    if (!form.value.midtransEnabled) return 'secondary' 
-    if (form.value.midtransEnvironment === 'production') return 'success'
-    return 'warning'
+    if (form.value.midtransEnabled) {
+        return form.value.midtransEnvironment === 'production' ? 'success' : 'warning'
+    }
+    if (form.value.qrisPaymentEnabled || form.value.manualPaymentEnabled) return 'success'
+    return 'secondary'
 })
 
 const paymentStatusText = computed(() => {
-    if (!form.value.midtransEnabled) return 'Disabled'
-    if (form.value.midtransEnvironment === 'production') return 'Production'
-    return 'Sandbox Mode'
+    const hasMidtrans = form.value.midtransEnabled
+    const hasManual = form.value.manualPaymentEnabled || form.value.qrisPaymentEnabled
+    
+    if (hasMidtrans && hasManual) {
+         const mtText = form.value.midtransEnvironment === 'production' ? 'Midtrans' : 'Sandbox'
+         return `${mtText} & Manual`
+    }
+    
+    if (hasMidtrans) {
+        return form.value.midtransEnvironment === 'production' ? 'Midtrans Live' : 'Midtrans Sandbox'
+    }
+
+    if (form.value.qrisPaymentEnabled && form.value.manualPaymentEnabled) return 'QRIS & Manual'
+    if (form.value.qrisPaymentEnabled) return 'QRIS Enabled'
+    if (form.value.manualPaymentEnabled) return 'Manual Payment'
+    return 'Disabled'
 })
 
 const paymentStatusIcon = computed(() => {
-    if (!form.value.midtransEnabled) return XCircle
-    if (form.value.midtransEnvironment === 'production') return CheckCircle2
-    return AlertCircle
+    if (form.value.midtransEnabled) {
+        return form.value.midtransEnvironment === 'production' ? CheckCircle2 : AlertCircle
+    }
+    if (form.value.qrisPaymentEnabled || form.value.manualPaymentEnabled) return CheckCircle2
+    return XCircle
 })
 
 const saveSettings = async () => {

@@ -33,6 +33,9 @@ export const settingsSchema = z.object({
     globalDueDay: z.number().int().min(1).max(31).optional().nullable(),
     globalReminderInterval: z.number().int().min(1).optional().nullable(),
     waEnabled: z.boolean().optional().nullable(),
+    waServiceUrl: z.string().url().or(z.string().length(0)).optional().nullable(),
+    waApiKey: z.string().optional().nullable(),
+    waInstanceId: z.string().optional().nullable(),
     autoNotifyNewBill: z.boolean().optional().nullable(),
     autoNotifyPaymentSuccess: z.boolean().optional().nullable(),
     autoReminderEnabled: z.boolean().optional().nullable(),
@@ -44,11 +47,11 @@ export const settingsSchema = z.object({
     manualPaymentEnabled: z.boolean().optional().nullable(),
     qrisPaymentEnabled: z.boolean().optional().nullable(),
     manualPaymentDetails: z.string().optional().nullable(),
-    qrisStaticImage: z.string().optional().nullable(),
     midtransEnabled: z.boolean().optional().nullable(),
     midtransServerKey: z.string().optional().nullable(),
     midtransClientKey: z.string().optional().nullable(),
     midtransEnvironment: z.enum(['sandbox', 'production']).optional().nullable(),
+    qrisRawString: z.string().optional().nullable(),
 });
 
 export const idParamSchema = z.object({

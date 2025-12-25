@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "9ed7771b-50b8-4805-b140-bdc7a042e717",
+  "id": "ca04571e-1054-4940-94d1-ee6f37e4bb15",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "bills": {
@@ -353,7 +353,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'Patungan WiFi'"
+          "default": "'Cara baru patungan WiFi'"
         },
         "app_url": {
           "name": "app_url",
@@ -377,7 +377,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'Assalamualaikum {name}, patungan bulan {month} / {year} sebesar Rp. {amount} sudah bisa dibayar. Untuk membayar secara otomatis, klik di sini: {link}'"
+          "default": "'Assalamualaikum {name}, patungan bulan {month} / {year} sebesar Rp. {amount} sudah bisa dibayar.{br} Untuk membayar secara otomatis, klik di sini: {link} {br}{br} Pesan ini dikirim otomatis oleh aplikasi.'"
         },
         "payment_template": {
           "name": "payment_template",
@@ -385,7 +385,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'Assalamualaikum {name}, patungan sebesar Rp. {amount} sudah diterima. Terima kasih!'"
+          "default": "'Assalamualaikum {name}, patungan sebesar Rp. {amount} via {method} sudah diterima. detailnya bisa cek disini : {link} {br} Maturnuwun! {br}{br} Pesan ini dikirim otomatis oleh aplikasi.'"
         },
         "reminder_template": {
           "name": "reminder_template",
@@ -393,7 +393,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'Assalamualaikum {name}, sekadar mengingatkan patungan WiFi bulan {month} / {year} sebesar Rp. {amount} belum lunas. Jika sudah bayar, abaikan pesan ini: {link}'"
+          "default": "'Assalamualaikum {name}, sekadar mengingatkan patungan WiFi bulan {month} / {year} sebesar Rp. {amount} belum lunas. Jika sudah bayar, abaikan pesan ini: {link} {br}{br} Pesan ini dikirim otomatis oleh aplikasi.'"
         },
         "global_due_day": {
           "name": "global_due_day",
@@ -418,6 +418,30 @@
           "notNull": false,
           "autoincrement": false,
           "default": false
+        },
+        "wa_service_url": {
+          "name": "wa_service_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'http://localhost:3030/api/v1'"
+        },
+        "wa_api_key": {
+          "name": "wa_api_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "wa_instance_id": {
+          "name": "wa_instance_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'main'"
         },
         "auto_notify_new_bill": {
           "name": "auto_notify_new_bill",
@@ -504,14 +528,16 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "'Tidak ingin menggunakan pembayaran otomatis? Silakan lakukan pembayaran tunai dengan menghubungi admin.'"
         },
-        "qris_static_image": {
-          "name": "qris_static_image",
+        "qris_raw_string": {
+          "name": "qris_raw_string",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "'00020101021126610014COM.GO-JEK.WWW01189360091439280284540210G9280284540303UMI51440014ID.CO.QRIS.WWW0215ID10253777680290303UMI5204553353033605802ID5910NEFLA LABS6006SORONG61059844562070703A0163044598'"
         },
         "midtrans_enabled": {
           "name": "midtrans_enabled",

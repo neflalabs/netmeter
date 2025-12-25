@@ -3,7 +3,7 @@ import { sqliteTable, text, integer, index, unique } from 'drizzle-orm/sqlite-co
 export const users = sqliteTable('users', {
     id: integer('id').primaryKey({ autoIncrement: true }),
     name: text('name').notNull(),
-    whatsapp: text('whatsapp').notNull(), // renamed from phoneNumber for consistency with plan
+    whatsapp: text('whatsapp').notNull(),
     pppoeUsername: text('pppoe_username').unique(),
     status: text('status').default('ACTIVE'),
     paymentPreference: text('payment_preference').default('MANUAL'),
@@ -44,6 +44,9 @@ export const settings = sqliteTable('settings', {
     globalReminderInterval: integer('global_reminder_interval').default(3), // Every 3 days
 
     waEnabled: integer('wa_enabled', { mode: 'boolean' }).default(false),
+    waServiceUrl: text('wa_service_url').default('http://localhost:3030/api/v1'), // Default URL
+    waApiKey: text('wa_api_key').default(''), // Default empty
+    waInstanceId: text('wa_instance_id').default('main'), // Default instance
     autoNotifyNewBill: integer('auto_notify_new_bill', { mode: 'boolean' }).default(false),
     autoNotifyPaymentSuccess: integer('auto_notify_payment_success', { mode: 'boolean' }).default(false),
     autoReminderEnabled: integer('auto_reminder_enabled', { mode: 'boolean' }).default(false),
@@ -59,7 +62,7 @@ export const settings = sqliteTable('settings', {
     manualPaymentEnabled: integer('manual_payment_enabled', { mode: 'boolean' }).default(true),
     qrisPaymentEnabled: integer('qris_payment_enabled', { mode: 'boolean' }).default(false),
     manualPaymentDetails: text('manual_payment_details').default('Tidak ingin menggunakan pembayaran otomatis? Silakan lakukan pembayaran tunai dengan menghubungi admin.'), // Bank details etc.
-    qrisStaticImage: text('qris_static_image'), // URL to static QRIS image
+    qrisRawString: text('qris_raw_string').default('00020101021126610014COM.GO-JEK.WWW01189360091439280284540210G9280284540303UMI51440014ID.CO.QRIS.WWW0215ID10253777680290303UMI5204553353033605802ID5910NEFLA LABS6006SORONG61059844562070703A0163044598'), // Raw QRIS string for dynamic injection
 
     // Midtrans Configuration
     midtransEnabled: integer('midtrans_enabled', { mode: 'boolean' }).default(false),
@@ -125,7 +128,7 @@ export const whatsappLogs = sqliteTable('whatsapp_logs', {
     userId: integer('user_id').references(() => users.id, { onDelete: 'set null' }),
     billId: integer('bill_id').references(() => bills.id, { onDelete: 'cascade' }),
     message: text('message').notNull(),
-    type: text('type', { enum: ['BILL', 'RECEIPT', 'REMINDER', 'OTHER'] }).default('OTHER'),
+    type: text('type', { enum: ['BILL', 'RECEIPT', 'REMINDER', 'INCOMING', 'OTHER'] }).default('OTHER'),
     status: text('status', { enum: ['SENT', 'DELIVERED', 'READ', 'FAILED'] }).default('SENT'),
     waMessageId: text('wa_message_id').unique(), // ID from wa-bot (whatsmeow)
     createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),

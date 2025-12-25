@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { CheckCircle2, AlertCircle, CreditCard, Phone } from 'lucide-vue-next'
+import { CheckCircle2, AlertCircle, CreditCard, Phone, Banknote } from 'lucide-vue-next'
 import Card from '@/components/ui/Card.vue'
 import CardHeader from '@/components/ui/CardHeader.vue'
 import CardContent from '@/components/ui/CardContent.vue'
@@ -190,6 +190,12 @@ const resetTransaction = async () => {
         isResetting.value = false;
     }
 }
+const confirmPaymentWaLink = computed(() => {
+    if (!bill.value) return '#'
+    const phone = bill.value.adminPhone || '08123456789'
+    const text = `Halo, saya sudah melakukan pembayaran patungan WiFi atas nama *${bill.value.userName}* sebesar *Rp ${formatCurrency(bill.value.amount)}* via Static QRIS. Mohon diverifikasi.`
+    return `https://wa.me/${formatPhoneForWhatsapp(phone)}?text=${encodeURIComponent(text)}`
+})
 </script>
 
 <template>
@@ -209,7 +215,7 @@ const resetTransaction = async () => {
             <div v-if="bill.status === 'PAID'" class="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 p-6 rounded-lg flex flex-col items-center text-center">
                 <CheckCircle2 class="w-16 h-16 mb-4 text-green-600 dark:text-green-500" />
                 <h1 class="text-2xl font-bold mb-1">PEMBAYARAN LUNAS</h1>
-                <p class="text-sm opacity-90">Terima kasih telah melakukan pembayaran tepat waktu.</p>
+                <p class="text-sm opacity-90">Terima kasih telah melakukan pembayaran bulan ini.</p>
             </div>
 
             <div v-else-if="bill.paymentStatus === 'PENDING'" class="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 p-6 rounded-lg flex flex-col items-center text-center">
@@ -265,9 +271,17 @@ const resetTransaction = async () => {
                                 <span class="text-muted-foreground">Ref ID</span>
                                 <span class="font-medium font-mono text-xs">{{ bill.transactionId }}</span>
                             </div>
-                            <div v-if="bill.paymentMethod !== 'CASH'" class="flex justify-between">
+                            <div class="flex justify-between">
                                 <span class="text-muted-foreground">Metode</span>
-                                <span class="font-medium uppercase">{{ bill.paymentType?.replace('_', ' ') || bill.paymentMethod }}</span>
+                                <span class="font-medium uppercase">
+                                    {{ 
+                                        bill.paymentMethod === 'MANUAL_TRANSFER' 
+                                            ? 'Static Qris' 
+                                            : bill.paymentMethod === 'CASH'
+                                                ? 'Tunai'
+                                                : (bill.paymentType?.replace('_', ' ') || bill.paymentMethod) 
+                                    }}
+                                </span>
                             </div>
                             <div v-if="bill.issuer" class="flex justify-between">
                                 <span class="text-muted-foreground">Penyedia</span>
@@ -298,6 +312,13 @@ const resetTransaction = async () => {
                              <p class="text-xs text-center text-muted-foreground mt-2">
                                 Mendukung QRIS, GoPay, ShopeePay, Dana, OVO, dan lainnya.
                             </p>
+
+                            <div class="mt-4 text-xs text-left bg-blue-50 text-blue-800 p-3 rounded-lg border border-blue-200 flex gap-2">
+                                <CheckCircle2 class="w-4 h-4 shrink-0 mt-0.5" />
+                                <p>
+                                    <strong>Otomatis:</strong> Pembayaran ini akan <b>diverifikasi otomatis</b> oleh sistem. Anda tidak perlu mengirim bukti transfer.
+                                </p>
+                            </div>
                             <div v-if="bill.paymentStatus === 'PENDING'" class="text-center mt-4">
                                 <button 
                                     @click="resetTransaction" 
@@ -308,34 +329,82 @@ const resetTransaction = async () => {
                                 </button>
                             </div>
                         </div>
+
+                        <!-- Separator 1: Midtrans vs Others -->
+                        <div v-if="settings.midtransEnabled && (settings.qrisPaymentEnabled || settings.manualPaymentEnabled)" class="relative my-8">
+                            <div class="absolute inset-0 flex items-center">
+                                <span class="w-full border-t border-border"></span>
+                            </div>
+                            <div class="relative flex justify-center text-xs uppercase">
+                                <span class="bg-card px-2 text-muted-foreground">Atau</span>
+                            </div>
+                        </div>
                         
                         <div class="space-y-8">
                             <!-- QRIS -->
-                            <div v-if="settings.qrisPaymentEnabled && settings.qrisStaticImage" class="flex flex-col items-center">
-                                <div class="bg-white p-4 rounded-xl shadow-sm border inline-block">
-                                    <img :src="settings.qrisStaticImage" alt="QRIS Code" class="max-w-[240px] h-auto rounded-lg" />
+                            <!-- QRIS -->
+                            <div v-if="settings.qrisPaymentEnabled" class="flex flex-col items-center space-y-4">
+                                <div class="bg-white p-4 rounded-xl shadow-sm border inline-block relative mt-4">
+                                    <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-sm whitespace-nowrap">
+                                        STATIC QRIS
+                                    </div>
+                                    <img 
+                                        :src="`/api/public/qris?amount=${bill.amount}`" 
+                                        alt="QRIS Code" 
+                                        class="max-w-[240px] h-auto rounded-lg" 
+                                    />
                                 </div>
-                                <p class="text-xs text-muted-foreground mt-3 font-medium bg-secondary/50 px-3 py-1 rounded-full">
-                                    Scan via GoPay / OVO / Dana / LinkAja
-                                </p>
+                                <div class="text-center space-y-3 max-w-xs">
+                                    <p class="text-xs text-muted-foreground font-medium bg-secondary/50 px-3 py-1 rounded-full inline-block">
+                                        Scan via GoPay / Dana / LinkAja atau Aplikasi Bank
+                                    </p>
+                                    
+                                     <div class="text-xs text-left bg-yellow-50 text-yellow-800 p-3 rounded-lg border border-yellow-200 flex gap-2">
+                                        <AlertCircle class="w-4 h-4 shrink-0 mt-0.5" />
+                                        <p>
+                                            <strong>Penting:</strong> Setelah melakukan pembayaran, mohon <b>konfirmasi ke admin</b> via WhatsApp agar tagihan segera diverifikasi.
+                                        </p>
+                                    </div>
+                                    
+                                    <Button class="w-full bg-green-600 hover:bg-green-700 text-white" size="sm" as="a" :href="confirmPaymentWaLink" target="_blank">
+                                        <Phone class="w-4 h-4 mr-2" /> Konfirmasi Pembayaran
+                                    </Button>
+                                </div>
+                            </div>
+                            
+                            <!-- Separator 2: QRIS vs Manual -->
+                            <div v-if="settings.qrisPaymentEnabled && settings.manualPaymentEnabled" class="relative">
+                                <div class="absolute inset-0 flex items-center">
+                                    <span class="w-full border-t border-border"></span>
+                                </div>
+                                <div class="relative flex justify-center text-xs uppercase">
+                                    <span class="bg-card px-2 text-muted-foreground">Atau</span>
+                                </div>
                             </div>
 
                             <!-- Manual Transfer -->
+                            <!-- Manual Transfer -->
                             <div v-if="settings.manualPaymentEnabled" class="text-center">
-                                <p class="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wider text-[10px]">Bayar Tunai?</p>
-                                <div class="bg-secondary/30 p-4 rounded-xl inline-block min-w-[200px]">
-                                    <p class="font-medium text-lg">{{ settings.manualPaymentDetails }}</p>
+                                <div class="border-2 border-dashed border-muted-foreground/20 bg-muted/20 p-6 rounded-xl space-y-4">
+                                    <div class="flex justify-center">
+                                        <div class="bg-background p-3 rounded-full shadow-sm">
+                                            <Banknote class="w-6 h-6 text-primary" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-sm mb-1">Pembayaran Tunai</h4>
+                                        <p class="text-xs text-muted-foreground mb-4">
+                                            Tidak ingin menggunakan pembayaran otomatis? Silakan lakukan pembayaran tunai dengan menghubungi admin.
+                                        </p>
+                                        <div class="bg-background/80 p-3 rounded-lg border text-sm font-medium">
+                                            {{ settings.manualPaymentDetails }}
+                                        </div>
+                                    </div>
+                                     <Button class="w-full" variant="secondary" as="a" :href="confirmWaLink" target="_blank">
+                                        <Phone class="w-4 h-4 mr-2" />Hubungi Admin
+                                    </Button>
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="mt-6">
-                            <Button class="w-full" size="lg" as="a" :href="confirmWaLink" target="_blank">
-                                 <Phone class="w-4 h-4 mr-2" />Cari atmin
-                            </Button>
-                            <p class="text-xs text-center text-muted-foreground mt-2">
-info posisi admin...
-                            </p>
                         </div>
                     </div>
                 </CardContent>

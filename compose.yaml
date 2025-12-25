@@ -30,13 +30,9 @@ services:
       - default
       - proxynpm
 
-  whatsapp:
-    container_name: netmeter-whatsapp
-    build:
-      context: ./apps/wa-bot
-    restart: unless-stopped
-    volumes:
-      - ./apps/wa-bot/data:/root/data
+  # frontend:
+  #   ...
+
 
 networks:
   proxynpm:

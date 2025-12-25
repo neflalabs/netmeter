@@ -64,9 +64,8 @@ app.get('/financial', zValidator('query', financialReportSchema), async (c) => {
 
         // Warning: spanning years logic is complex. Simplified query:
         // Get all UNPAID bills where (year > startY OR (year = startY AND month >= startM)) ...
-        // For simplicity, let's just get ALL UNPAID bills for now as "Current Outstanding" is often what's wanted.
-        // Use a separate query for "Unpaid in Period" if needed.
-        // Let's do: Total Outstanding (All Time).
+        // 2. Outstanding Amount (Current Total Unpaid Bills)
+        // Note: For reporting purposes, we show all currently unpaid bills as "Total Outstanding".
 
         const unpaidBills = await db.select({ amount: bills.amount })
             .from(bills)

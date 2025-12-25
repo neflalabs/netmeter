@@ -14,12 +14,16 @@
                         <p class="text-xs text-muted-foreground mt-0.5">Kontrol pengiriman pesan WhatsApp otomatis ke pelanggan.</p>
                     </div>
                 </div>
-                <Switch v-model="form.waEnabled" class="scale-110" />
+                <Switch 
+                    :checked="!!form.waEnabled" 
+                    @update:checked="(val: boolean) => form.waEnabled = val" 
+                    class="scale-110" 
+                />
             </div>
         </div>
 
         <transition name="fade-slide">
-            <div v-if="form.waEnabled" class="space-y-8">
+            <div v-if="!!form.waEnabled" class="space-y-8">
                 <!-- Group 1: Automated Messaging -->
                 <section class="space-y-4">
                     <div class="flex items-center gap-2 px-1">
@@ -43,11 +47,14 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <Switch v-model="form.autoNotifyNewBill" />
+                                    <Switch 
+                                        :checked="!!form.autoNotifyNewBill" 
+                                        @update:checked="(val: boolean) => form.autoNotifyNewBill = val" 
+                                    />
                                 </div>
 
                                 <transition name="expand">
-                                    <div v-if="form.autoNotifyNewBill" class="space-y-4 pt-1">
+                                    <div v-if="!!form.autoNotifyNewBill" class="space-y-4 pt-1">
                                         <div class="flex items-center gap-3 p-3 bg-background/50 rounded-xl border border-border/50">
                                             <label class="text-[11px] font-medium whitespace-nowrap">Waktu Pengiriman</label>
                                             <input type="time" v-model="form.autoBillTime" class="ml-auto bg-background border border-border rounded-lg text-xs p-1.5 focus:ring-1 focus:ring-primary outline-none transition-all" />
@@ -87,11 +94,14 @@
                                             <p class="text-[10px] text-muted-foreground mt-0.5">Konfirmasi saat pembayaran lunas.</p>
                                         </div>
                                     </div>
-                                    <Switch v-model="form.autoNotifyPaymentSuccess" />
+                                    <Switch 
+                                        :checked="!!form.autoNotifyPaymentSuccess" 
+                                        @update:checked="(val: boolean) => form.autoNotifyPaymentSuccess = val" 
+                                    />
                                 </div>
 
                                 <transition name="expand">
-                                    <div v-if="form.autoNotifyPaymentSuccess" class="space-y-2 pt-1">
+                                    <div v-if="!!form.autoNotifyPaymentSuccess" class="space-y-2 pt-1">
                                         <div class="flex items-center justify-between px-0.5">
                                             <p class="text-[11px] font-medium text-muted-foreground">Template Pesan</p>
                                         </div>
@@ -122,11 +132,14 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <Switch v-model="form.autoReminderEnabled" />
+                                    <Switch 
+                                        :checked="!!form.autoReminderEnabled" 
+                                        @update:checked="(val: boolean) => form.autoReminderEnabled = val" 
+                                    />
                                 </div>
 
                                 <transition name="expand">
-                                    <div v-if="form.autoReminderEnabled" class="space-y-4 pt-1">
+                                    <div v-if="!!form.autoReminderEnabled" class="space-y-4 pt-1">
                                         <div class="grid grid-cols-3 gap-3">
                                             <div class="space-y-1.5">
                                                 <label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">Frekuensi</label>
@@ -202,7 +215,11 @@
                                     <div class="w-2 h-2 rounded-full bg-purple-400"></div>
                                     <span class="text-xs font-medium">Aktifkan Quiet Mode Sepanjang Akhir Pekan</span>
                                 </div>
-                                <Switch v-model="form.quietHoursWeekend" @click.stop />
+                                <Switch 
+                                    :checked="!!form.quietHoursWeekend" 
+                                    @update:checked="(val: boolean) => form.quietHoursWeekend = val"
+                                    @click.stop 
+                                />
                             </div>
                         </CardContent>
                     </Card>

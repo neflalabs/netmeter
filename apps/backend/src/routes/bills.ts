@@ -260,9 +260,19 @@ app.post('/:id/notify', zValidator('param', idParamSchema), async (c) => {
         const appUrl = appSettings[0].appUrl || 'https://net.home.npx.my.id';
         const template = appSettings[0].billTemplate || ''; // Should use DB default
 
+        console.log(`[Bills] Attempting to send notification for bill ${id}`);
+        console.log(`[Bills] waEnabled: ${appSettings[0].waEnabled}, User: ${bill.name}, Phone: ${bill.whatsapp}`);
 
         // 3. Send Notification
         const result = await NotificationService.sendBillNotification(bill, bill, appSettings[0], true);
+
+        console.log(`[Bills] Notification result:`, result);
+
+        if (result === null) {
+            return c.json({
+                error: 'WhatsApp notifications are disabled. Enable "Status Notifikasi Global" in Settings > Notification tab.'
+            }, 400);
+        }
 
         if (result === 'ALREADY_SENT') {
             return c.json({ error: 'Notifikasi tagihan ini sudah pernah dikirim.' }, 400);
@@ -281,7 +291,7 @@ app.post('/:id/notify', zValidator('param', idParamSchema), async (c) => {
         });
 
     } catch (e: any) {
-        console.error('Error sending notification:', e);
+        console.error('[Bills] Error sending notification:', e);
         return c.json({ error: e.message || 'Failed to send notification' }, 500);
     }
 });

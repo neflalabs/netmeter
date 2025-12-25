@@ -40,33 +40,17 @@
 
       <div v-if="form.qrisPaymentEnabled" class="space-y-4 pt-2">
          <!-- Static Content -->
-        <div class="mt-4 p-4 border-2 border-dashed border-border rounded-lg text-center bg-secondary/20">
-            <div v-if="form.qrisStaticImage" class="mb-4 relative inline-block group">
-                <img :src="form.qrisStaticImage" alt="QRIS" class="max-h-48 rounded shadow-sm" />
-                <button 
-                    @click="form.qrisStaticImage = ''"
-                    class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                    <X class="w-4 h-4" />
-                </button>
-            </div>
-            
-            <div v-else>
-                <p class="text-sm text-muted-foreground mb-4">Upload gambar QRIS (Max 500KB)</p>
-            </div>
-
-            <div class="flex justify-center">
-                <input 
-                    type="file" 
-                    ref="fileInput" 
-                    class="hidden" 
-                    accept="image/*"
-                    @change="handleUpload"
-                />
-                <Button size="sm" variant="outline" @click="triggerFileInput">
-                    <Upload class="w-4 h-4 mr-2" />
-                    {{ form.qrisStaticImage ? 'Ganti Gambar' : 'Pilih Gambar' }}
-                </Button>
+        <div class="mt-4 p-4 border border-border rounded-lg bg-secondary/10">
+            <div class="space-y-2">
+                <Label>QRIS Raw String</Label>
+                <textarea 
+                  v-model="form.qrisRawString"
+                  class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[80px] font-mono text-xs"
+                  placeholder="Paste QRIS text content here (00020101...)"
+                ></textarea>
+                <p class="text-[10px] text-muted-foreground">
+                    String ini akan digunakan untuk generate QRIS dengan nominal dinamis sesuai tagihan.
+                </p>
             </div>
         </div>
       </div>
@@ -143,7 +127,7 @@ import { ref, computed } from 'vue'
 import Input from '@/components/ui/Input.vue'
 import Label from '@/components/ui/Label.vue'
 import Button from '@/components/ui/Button.vue'
-import { Upload, X, Copy, Check } from 'lucide-vue-next'
+import { Copy, Check } from 'lucide-vue-next'
 import { UpdateSettingsDTO } from '@/types'
 import { useToast } from '@/composables/useToast'
 
@@ -152,7 +136,6 @@ const props = defineProps<{
 }>()
 
 const { toast } = useToast()
-const fileInput = ref<HTMLInputElement | null>(null)
 const isCopied = ref(false)
 
 const notificationUrl = computed(() => {
@@ -174,34 +157,5 @@ const copyNotificationUrl = () => {
     setTimeout(() => {
         isCopied.value = false
     }, 2000)
-}
-
-const triggerFileInput = () => {
-    fileInput.value?.click()
-}
-
-const handleUpload = (event: Event) => {
-    const target = event.target as HTMLInputElement
-    if (!target.files || target.files.length === 0) return
-
-    const file = target.files[0]
-    
-    // Validate file size (max 500KB for Base64 safety in SQLite)
-    if (file.size > 500 * 1024) {
-        alert('Ukuran gambar terlalu besar. Maksimal 500KB.')
-        if (target) target.value = ''
-        return
-    }
-
-    const reader = new FileReader()
-    reader.onload = (e) => {
-        if (e.target?.result) {
-            props.form.qrisStaticImage = e.target.result as string
-        }
-    }
-    reader.readAsDataURL(file)
-    
-    // Reset input
-    if (target) target.value = ''
 }
 </script>

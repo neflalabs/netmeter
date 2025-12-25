@@ -85,8 +85,6 @@ app.get('/bills/:token', zValidator('param', tokenParamSchema), async (c) => {
         }
 
         // 2. Get Admin Info (Bank Details) for Transfer
-        // For now hardcoded or fetched from settings notes? 
-        // User agreed to use "Info Rekening (Admin)".
         // We will fetch App Settings to get Admin Phone for WhatsApp link.
         const appSettings = await db.select().from(settings).limit(1);
         const adminPhone = appSettings.length > 0 ? appSettings[0].adminPhoneNumber : '';
@@ -115,7 +113,6 @@ app.get('/settings', async (c) => {
             manualPaymentEnabled: settings.manualPaymentEnabled,
             qrisPaymentEnabled: settings.qrisPaymentEnabled,
             manualPaymentDetails: settings.manualPaymentDetails,
-            qrisStaticImage: settings.qrisStaticImage,
 
             // Midtrans Public Config
             midtransEnabled: settings.midtransEnabled,

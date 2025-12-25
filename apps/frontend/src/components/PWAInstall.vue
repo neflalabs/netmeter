@@ -3,8 +3,11 @@ import { ref, onMounted } from 'vue'
 import { Download, X } from 'lucide-vue-next'
 import Button from './ui/Button.vue'
 
+import { useAuthStore } from '@/stores/auth'
+
 const deferredPrompt = ref<any>(null)
 const showBanner = ref(false)
+const authStore = useAuthStore()
 
 onMounted(() => {
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -12,8 +15,13 @@ onMounted(() => {
         e.preventDefault()
         // Stash the event so it can be triggered later.
         deferredPrompt.value = e
+        
         // Update UI notify the user they can install the PWA
-        showBanner.value = true
+        // Only show if user is logged in
+        if (authStore.isAuthenticated) {
+            showBanner.value = true
+        }
+        
         console.log('PWA: beforeinstallprompt fired')
     })
 
@@ -40,6 +48,18 @@ const handleInstall = async () => {
     deferredPrompt.value = null
     showBanner.value = false
 }
+
+// Watch for authentication changes
+import { watch } from 'vue'
+watch(() => authStore.isAuthenticated, (newValue) => {
+    if (newValue && deferredPrompt.value) {
+        // If user logs in and we have a deferred prompt, show it
+        showBanner.value = true
+    } else if (!newValue) {
+        // If user logs out, hide it
+        showBanner.value = false
+    }
+})
 </script>
 
 <template>

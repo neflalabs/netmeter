@@ -1,5 +1,81 @@
 <template>
     <div class="space-y-6">
+        <!-- Configuration Section -->
+        <section class="space-y-4">
+            <div class="flex items-center gap-2 px-1">
+                <div class="w-1.5 h-4 bg-primary rounded-full"></div>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Wainthego Connection</h3>
+            </div>
+
+            <Card class="border-none bg-secondary/20 shadow-none">
+                <CardContent class="p-5 space-y-4">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">Service URL</label>
+                            <input 
+                                v-model="form.waServiceUrl" 
+                                type="text" 
+                                placeholder="http://localhost:3030/api/v1"
+                                class="w-full bg-background border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary transition-all" 
+                            />
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">Instance ID</label>
+                            <input 
+                                v-model="form.waInstanceId" 
+                                type="text" 
+                                placeholder="main"
+                                class="w-full bg-background border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary transition-all" 
+                            />
+                        </div>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">API Key (Master)</label>
+                        <input 
+                            v-model="form.waApiKey" 
+                            type="password" 
+                            placeholder="Enter your Wainthego API Key"
+                            class="w-full bg-background border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary transition-all" 
+                        />
+                    </div>
+                    
+                    <div class="flex items-center gap-2 p-3 bg-primary/5 rounded-xl border border-primary/20 text-[10px] text-primary/80">
+                        <Info class="w-3.5 h-3.5 shrink-0" />
+                        <p>Pastikan Anda sudah menekan tombol <b>Simpan Perubahan</b> di bawah sebelum mencoba <b>Hubungkan</b>, agar konfigurasi tersimpan ke server.</p>
+                    </div>
+                </CardContent>
+            </Card>
+        </section>
+
+        <!-- Webhook URL Section -->
+        <section class="space-y-4">
+            <div class="flex items-center gap-2 px-1">
+                <div class="w-1.5 h-4 bg-primary rounded-full"></div>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Webhook URL</h3>
+            </div>
+
+            <Card class="border-none bg-secondary/20 shadow-none">
+                <CardContent class="p-5 space-y-3">
+                    <div class="flex items-center gap-2 p-3 bg-primary/5 rounded-xl border border-primary/20 text-[10px] text-primary/80">
+                        <Info class="w-3.5 h-3.5 shrink-0" />
+                        <p>Salin URL ini dan paste ke <b>Webhook URL</b> di dashboard Wainthego untuk menerima update status pesan secara real-time.</p>
+                    </div>
+                    
+                    <div class="flex items-center gap-2">
+                        <input 
+                            :value="webhookUrl" 
+                            readonly
+                            class="flex-1 bg-background border border-border rounded-xl text-xs p-2.5 font-mono text-muted-foreground" 
+                        />
+                        <Button variant="outline" size="sm" class="h-9 px-3 rounded-lg" @click="copyWebhookUrl">
+                            <Copy class="w-3.5 h-3.5 mr-1.5" />
+                            {{ copied ? 'Copied!' : 'Copy' }}
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+        </section>
+
         <!-- Compact Status Header -->
         <div class="relative overflow-hidden p-4 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 shadow-sm group">
             <div class="absolute top-0 right-0 -m-4 w-20 h-20 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all duration-700"></div>
@@ -15,36 +91,26 @@
                         <div class="flex items-center gap-1.5 mt-1.5">
                             <div class="w-1.5 h-1.5 rounded-full" :class="status === 'CONNECTED' ? 'bg-green-500 animate-pulse' : 'bg-muted-foreground/30'"></div>
                             <p class="text-[11px] text-muted-foreground font-medium truncate max-w-[180px]">
-                                {{ status === 'CONNECTED' ? (phone || 'Terhubung sebagai User') : (status === 'QR_READY' ? 'Menunggu Scan' : 'Disconnected') }}
+                                {{ status === 'CONNECTED' ? (phone || 'Terhubung') : 'Disconnected' }}
                             </p>
                         </div>
                     </div>
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <Button v-if="status === 'DISCONNECTED' || status === 'QR_READY'" variant="outline" size="xs" class="h-8 text-[11px] px-3 rounded-lg" @click="connect" :disabled="loading">
-                        {{ loading ? 'Generating...' : 'Hubungkan' }}
+                    <Button variant="outline" size="sm" class="h-8 w-8 p-0 rounded-lg" @click="fetchStatus" :disabled="loading">
+                        <RefreshCcw class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" />
                     </Button>
 
-                    <Button v-if="status === 'CONNECTED'" variant="destructive" size="xs" class="h-8 text-[11px] px-3 rounded-lg bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500 hover:text-white" @click="disconnect" :disabled="loading">
-                        {{ loading ? 'Disconnecting...' : 'Disconnect' }}
+                    <Button v-if="status === 'CONNECTED'" variant="destructive" size="sm" class="h-8 text-[11px] px-3 rounded-lg bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500 hover:text-white" @click="disconnect" :disabled="loading">
+                        Putus Koneksi
                     </Button>
+
+                    <a v-else href="https://wa.home.npx.my.id" target="_blank" class="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground hover:opacity-90 transition-all shadow-sm">
+                        Buka Dashboard <ExternalLink class="w-3 h-3" />
+                    </a>
                 </div>
             </div>
-
-            <!-- Integrated QR Code -->
-            <transition name="expand">
-                <div v-if="status === 'QR_READY' && qrCode" class="pt-4 mt-4 border-t border-primary/10">
-                    <div class="flex flex-col items-center gap-3">
-                        <div class="bg-white p-3 rounded-2xl border border-primary/10 shadow-lg">
-                            <img :src="qrCode" alt="Scan QR Code" class="w-40 h-40 object-contain" />
-                        </div>
-                        <p class="text-[10px] text-muted-foreground text-center max-w-[200px] leading-relaxed">
-                            Buka WhatsApp di ponsel Anda > Perangkat Tertaut > Tautkan Perangkat.
-                        </p>
-                    </div>
-                </div>
-            </transition>
         </div>
 
         <!-- Activity History (Tighter List) -->
@@ -53,7 +119,7 @@
                 <h3 class="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/80 flex items-center gap-2">
                     <History class="w-3 h-3 text-primary" /> Riwayat Aktivitas
                 </h3>
-                <Button variant="ghost" size="xs" class="h-7 text-[10px] text-muted-foreground hover:text-primary" @click="fetchLogs(1)" :disabled="loadingLogs">
+                <Button variant="ghost" size="sm" class="h-7 text-[10px] text-muted-foreground hover:text-primary" @click="fetchLogs(1)" :disabled="loadingLogs">
                     <RefreshCcw class="w-2.5 h-2.5 mr-1" :class="{ 'animate-spin': loadingLogs }" /> Refresh
                 </Button>
             </div>
@@ -82,7 +148,9 @@
                             </div>
                             <div class="flex flex-col items-end gap-1 shrink-0">
                                 <div class="text-[9px] font-medium text-muted-foreground/60">{{ formatDate(log.createdAt) }}</div>
-                                <div class="flex items-center gap-1 px-1.5 py-0.5 rounded-md" 
+                                
+                                <!-- Outcome Status (Only for outgoing) -->
+                                <div v-if="log.type !== 'INCOMING'" class="flex items-center gap-1 px-1.5 py-0.5 rounded-md" 
                                     :class="{
                                         'text-green-500 bg-green-500/5': log.status === 'SENT' || log.status === 'DELIVERED',
                                         'text-blue-500 bg-blue-500/5': log.status === 'READ',
@@ -92,6 +160,11 @@
                                     <CheckCheck v-else-if="log.status === 'DELIVERED' || log.status === 'READ'" class="w-2.5 h-2.5" />
                                     <XCircle v-else class="w-2.5 h-2.5" />
                                     <span class="text-[8px] font-bold uppercase tracking-tighter">{{ log.status }}</span>
+                                </div>
+                                <!-- Incoming Indicator -->
+                                <div v-else class="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-violet-500 bg-violet-500/5">
+                                    <ArrowDownLeft class="w-2.5 h-2.5" />
+                                    <span class="text-[8px] font-bold uppercase tracking-tighter">RECEIVED</span>
                                 </div>
                             </div>
                         </div>
@@ -115,7 +188,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import Button from '@/components/ui/Button.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import { 
@@ -125,20 +198,25 @@ import {
     RefreshCcw, 
     Check, 
     CheckCheck,
-    XCircle 
+    XCircle,
+    Info,
+    ExternalLink,
+    Copy,
+    ArrowDownLeft
 } from 'lucide-vue-next'
+import Card from '@/components/ui/Card.vue'
+import CardContent from '@/components/ui/CardContent.vue'
 import { whatsappApi } from '@/api'
 import type { UpdateSettingsDTO } from '@/types'
 
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 
-defineProps<{
-    form?: UpdateSettingsDTO
+const props = defineProps<{
+    form: UpdateSettingsDTO
 }>()
 
-const status = ref<'DISCONNECTED' | 'CONNECTED' | 'QR_READY'>('DISCONNECTED')
-const qrCode = ref<string>('')
+const status = ref<'DISCONNECTED' | 'CONNECTED' | 'SCANNING'>('DISCONNECTED')
 const loading = ref(false)
 const phone = ref('')
 const { toast } = useToast()
@@ -154,18 +232,45 @@ const limit = ref(5)
 
 const api = whatsappApi()
 
+// Webhook URL (construct from current location or env)
+const webhookUrl = ref('')
+const copied = ref(false)
+
+const copyWebhookUrl = async () => {
+    try {
+        await navigator.clipboard.writeText(webhookUrl.value)
+        copied.value = true
+        setTimeout(() => {
+            copied.value = false
+        }, 2000)
+        toast({
+            title: 'Copied!',
+            description: 'Webhook URL copied to clipboard',
+            variant: 'success'
+        })
+    } catch (e) {
+        toast({
+            title: 'Failed',
+            description: 'Could not copy to clipboard',
+            variant: 'destructive'
+        })
+    }
+}
+
 const fetchStatus = async () => {
+    loading.value = true
     try {
         const res = await api.getStatus() as any
+        status.value = res.status
+        
         if (res.status === 'CONNECTED') {
-            status.value = 'CONNECTED'
-             phone.value = res.phone || ''
-        } else {
-             status.value = 'DISCONNECTED'
+             phone.value = res.user?.name || res.user?.id || 'Terhubung'
         }
     } catch (e) {
         console.error('Failed to fetch status', e)
         status.value = 'DISCONNECTED'
+    } finally {
+        loading.value = false
     }
 }
 
@@ -191,34 +296,8 @@ const handlePageChange = (page: number) => {
     fetchLogs(page)
 }
 
-const connect = async () => {
-    loading.value = true
-    try {
-        const res = await api.getQR() as any
-        if (res.qr) {
-            status.value = 'QR_READY'
-            qrCode.value = res.qr
-        } else if (res.status === 'CONNECTED') {
-             status.value = 'CONNECTED'
-             phone.value = res.phone
-             toast({
-                title: 'Terhubung',
-                description: 'WhatsApp berhasil terhubung.',
-                variant: 'success'
-             })
-             fetchLogs()
-        }
-    } catch (e) {
-        console.error('Failed to get QR', e)
-        toast({
-            title: 'Gagal',
-            description: 'Gagal mendapatkan QR Code. Pastikan container WhatsApp berjalan.',
-            variant: 'destructive'
-        })
-    } finally {
-        loading.value = false
-    }
-}
+// Status refresh is handled by fetchStatus
+const connect = undefined
 
 const disconnect = async () => {
     const confirmed = await confirm({
@@ -234,7 +313,6 @@ const disconnect = async () => {
     try {
         await api.logout()
         status.value = 'DISCONNECTED'
-        qrCode.value = ''
         phone.value = ''
         toast({
             title: 'Disconnected',
@@ -258,6 +336,7 @@ const getTypeBadgeClass = (type: string) => {
         case 'BILL': return 'bg-blue-500/10 text-blue-500 border-blue-500/20'
         case 'RECEIPT': return 'bg-green-500/10 text-green-500 border-green-500/20'
         case 'REMINDER': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
+        case 'INCOMING': return 'bg-violet-500/10 text-violet-500 border-violet-500/20'
         default: return 'bg-slate-500/10 text-slate-500 border-slate-500/20'
     }
 }
@@ -274,6 +353,13 @@ const formatDate = (dateStr: string) => {
 }
 
 onMounted(() => {
+    // Construct webhook URL from current location
+    const protocol = window.location.protocol
+    const host = window.location.host
+    // Remove /settings or any path, just use base
+    const baseUrl = `${protocol}//${host}`
+    webhookUrl.value = `${baseUrl}/api/webhook/wainthego`
+    
     fetchStatus()
     fetchLogs()
 })

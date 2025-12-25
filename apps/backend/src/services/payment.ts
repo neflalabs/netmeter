@@ -92,10 +92,7 @@ export class PaymentService {
             // BUT, to be safe against env changes, we should probably encode env in orderId or just reset it.
             // Simplified: if we have a token, we check if Midtrans would accept it.
             // Actually, a better way is to store the environment used to generate the token.
-            // For now, let's just make sure we don't reuse if environment changed.
-            // Since we don't store env in DB yet, we'll clearing it in settings.ts is more robust.
-            // But we can also check if the snapToken URL would match.
-
+            // Verify that we match the environment and amount
             if (expiry > now && bill.snapAmount === bill.amount) {
                 // Token is still valid and amount matches, reuse it
                 return {

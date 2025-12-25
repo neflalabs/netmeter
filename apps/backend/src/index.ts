@@ -80,6 +80,9 @@ app.route('/api/public', publicRoute)
 import paymentRoute from './routes/payment'
 app.route('/api/payment', paymentRoute)
 
+import qrisRoute from './routes/qris'
+app.route('/api/public/qris', qrisRoute)
+
 
 
 import whatsappRoute from './routes/whatsapp'
@@ -99,6 +102,11 @@ app.use('/api/reports*', jwt({
     secret: JWT_SECRET
 }))
 app.route('/api/reports', reportsRoute)
+
+import webhookRoute from './routes/webhook'
+// Webhook is public - no JWT middleware
+app.route('/api/webhook', webhookRoute)
+
 
 app.get('/', (c) => {
     return c.text('Netmeter API is running on Bun!')
