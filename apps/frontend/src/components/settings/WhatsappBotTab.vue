@@ -14,11 +14,23 @@
                         <p class="text-xs text-muted-foreground mt-0.5">Enable WhatsApp messaging via Wainthego API</p>
                     </div>
                 </div>
-                <Switch 
-                    :checked="!!form.waEnabled" 
-                    @update:checked="(val) => form.waEnabled = val" 
-                    class="scale-110" 
-                />
+                <div class="flex items-center gap-3">
+                    <Button 
+                        v-if="form.waEnabled" 
+                        variant="ghost" 
+                        size="icon" 
+                        class="h-9 w-9 rounded-xl hover:bg-primary/10" 
+                        @click="checkStatus" 
+                        :disabled="checkingStatus"
+                    >
+                        <RefreshCcw class="w-4 h-4" :class="{ 'animate-spin': checkingStatus }" />
+                    </Button>
+                    <Switch 
+                        :checked="!!form.waEnabled" 
+                        @update:checked="(val) => form.waEnabled = val" 
+                        class="scale-110" 
+                    />
+                </div>
             </div>
         </div>
 
@@ -54,14 +66,45 @@
                                     />
                                 </div>
                             </div>
+                            <div class="grid gap-4 sm:grid-cols-2">
+                                <div class="space-y-1.5">
+                                    <label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">API Key (Master)</label>
+                                    <input 
+                                        v-model="form.waApiKey" 
+                                        type="password" 
+                                        placeholder="Wainthego API Key"
+                                        class="w-full bg-background border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary transition-all" 
+                                    />
+                                </div>
+                                <div class="space-y-1.5">
+                                    <label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">Webhook Secret (Verification)</label>
+                                    <input 
+                                        v-model="form.waWebhookSecret" 
+                                        type="password" 
+                                        placeholder="Webhook Secret (Optional)"
+                                        class="w-full bg-background border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary transition-all" 
+                                    />
+                                </div>
+                            </div>
+                            
                             <div class="space-y-1.5">
-                                <label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">API Key (Master)</label>
-                                <input 
-                                    v-model="form.waApiKey" 
-                                    type="password" 
-                                    placeholder="Enter your Wainthego API Key"
-                                    class="w-full bg-background border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary transition-all" 
-                                />
+                                <label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">Webhook URL (Copy to Wainthego)</label>
+                                <div class="relative">
+                                    <input 
+                                        :value="webhookUrl" 
+                                        type="text" 
+                                        readOnly
+                                        class="w-full bg-secondary/30 border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary transition-all font-mono" 
+                                    />
+                                    <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        class="absolute right-1 top-1 h-8 px-2 text-[10px] font-bold text-primary hover:bg-primary/10"
+                                        @click="copyWebhook"
+                                    >
+                                        {{ copied ? 'COPIED!' : 'COPY' }}
+                                    </Button>
+                                </div>
                             </div>
                             
                             <div class="flex items-center gap-2 p-3 bg-blue-500/5 rounded-xl border border-blue-500/20 text-[10px] text-blue-600 dark:text-blue-400">
@@ -72,46 +115,73 @@
                     </Card>
                 </section>
 
-                <!-- Connection Status -->
+                <!-- WhatsApp Message Logs -->
                 <section class="space-y-4">
-                    <div class="flex items-center gap-2 px-1">
-                        <div class="w-1.5 h-4 bg-green-500 rounded-full"></div>
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Connection Status</h3>
+                    <div class="flex items-center justify-between px-1">
+                        <div class="flex items-center gap-2">
+                            <div class="w-1.5 h-4 bg-primary rounded-full"></div>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">WhatsApp Message Logs</h3>
+                        </div>
+                        <div class="flex items-center gap-2">
+                             <div class="flex items-center bg-secondary/20 p-0.5 rounded-lg border border-border/50">
+                                <button 
+                                    v-for="filter in logFilters" 
+                                    :key="filter.value"
+                                    @click="activeFilter = filter.value"
+                                    class="px-2.5 py-1 text-[9px] font-bold rounded-md transition-all"
+                                    :class="activeFilter === filter.value ? 'bg-background shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'"
+                                >
+                                    {{ filter.label }}
+                                </button>
+                            </div>
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                class="h-7 text-[10px] gap-1.5 text-muted-foreground hover:text-primary"
+                                @click="fetchLogs"
+                                :disabled="loadingLogs"
+                            >
+                                <RefreshCcw class="w-3 h-3" :class="{ 'animate-spin': loadingLogs }" />
+                                Refresh
+                            </Button>
+                        </div>
                     </div>
 
-                    <Card class="border-none bg-secondary/20 shadow-none">
-                        <CardContent class="p-5">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow-inner transition-colors border border-primary/10"
-                                        :class="connectionStatus === 'CONNECTED' ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground'">
-                                        <MessageCircle class="w-5 h-5" />
+                    <Card class="border-none bg-secondary/10 shadow-none overflow-hidden">
+                        <div v-if="filteredLogs.length > 0" class="divide-y divide-border/50">
+                            <div v-for="log in filteredLogs" :key="log.id" class="p-4 hover:bg-secondary/20 transition-colors">
+                                <div class="flex items-start justify-between gap-4">
+                                    <div class="space-y-1 min-w-0">
+                                        <div class="flex items-center gap-2">
+                                            <span 
+                                                class="text-[9px] font-bold px-1.5 py-0.5 rounded-md"
+                                                :class="log.type === 'INCOMING' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'"
+                                            >
+                                                {{ log.type === 'INCOMING' ? 'IN' : 'OUT' }}
+                                            </span>
+                                            <span class="font-bold text-xs truncate">{{ log.userName || log.recipient }}</span>
+                                            <span class="text-[10px] text-muted-foreground">{{ formatDate(log.createdAt) }}</span>
+                                        </div>
+                                        <p class="text-xs text-muted-foreground leading-relaxed break-words">{{ log.message }}</p>
                                     </div>
-                                    <div>
-                                        <h4 class="font-bold text-sm tracking-tight leading-none">
-                                            {{ connectionStatus === 'CONNECTED' ? 'Connected' : 'Disconnected' }}
-                                        </h4>
-                                        <p class="text-[11px] text-muted-foreground mt-1">
-                                            {{ connectionStatus === 'CONNECTED' ? (connectedUser || 'WhatsApp Active') : 'Not connected to WhatsApp' }}
-                                        </p>
+                                    <div class="shrink-0 flex flex-col items-end gap-1">
+                                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-primary/10 text-primary">{{ log.recipient }}</span>
+                                        <span class="text-[8px] uppercase font-bold text-muted-foreground/60">{{ log.type }}</span>
                                     </div>
-                                </div>
-
-                                <div class="flex items-center gap-2">
-                                    <Button variant="outline" size="sm" class="h-8 w-8 p-0 rounded-lg" @click="checkStatus" :disabled="checkingStatus">
-                                        <RefreshCcw class="w-3.5 h-3.5" :class="{ 'animate-spin': checkingStatus }" />
-                                    </Button>
-
-                                    <a href="https://wa.home.npx.my.id" target="_blank" class="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground hover:opacity-90 transition-all shadow-sm">
-                                        Dashboard <ExternalLink class="w-3 h-3" />
-                                    </a>
                                 </div>
                             </div>
-                        </CardContent>
+                        </div>
+                        <div v-else class="p-12 text-center space-y-3">
+                            <div class="inline-flex w-12 h-12 bg-secondary/50 rounded-full items-center justify-center text-muted-foreground/30">
+                                <MessageCircle class="w-6 h-6" />
+                            </div>
+                            <p class="text-xs text-muted-foreground">No messages recorded for this filter.</p>
+                        </div>
                     </Card>
                 </section>
             </div>
         </transition>
+
 
         <!-- Disabled State -->
         <div v-if="!form.waEnabled" class="p-12 text-center space-y-4">
@@ -126,8 +196,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { MessageCircle, Info, RefreshCcw, ExternalLink } from 'lucide-vue-next'
+import { ref, onMounted, computed } from 'vue'
+import { MessageCircle, Info, RefreshCcw } from 'lucide-vue-next'
+
 import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
 import Switch from '@/components/ui/Switch.vue'
@@ -135,15 +206,77 @@ import Button from '@/components/ui/Button.vue'
 import type { UpdateSettingsDTO } from '@/types'
 import { whatsappApi } from '@/api'
 
+import { useToast } from '@/composables/useToast'
+
 const props = defineProps<{
     form: UpdateSettingsDTO
 }>()
 
+const { toast } = useToast()
 const api = whatsappApi()
 
 const connectionStatus = ref<'CONNECTED' | 'DISCONNECTED'>('DISCONNECTED')
 const connectedUser = ref('')
 const checkingStatus = ref(false)
+const copied = ref(false)
+const messageLogs = ref<any[]>([])
+const loadingLogs = ref(false)
+const activeFilter = ref<'ALL' | 'INCOMING' | 'OUTGOING'>('ALL')
+
+const logFilters = [
+    { label: 'ALL', value: 'ALL' },
+    { label: 'IN', value: 'INCOMING' },
+    { label: 'OUT', value: 'OUTGOING' }
+] as const
+
+const filteredLogs = computed(() => {
+    if (activeFilter.value === 'ALL') return messageLogs.value
+    if (activeFilter.value === 'INCOMING') return messageLogs.value.filter(l => l.type === 'INCOMING')
+    if (activeFilter.value === 'OUTGOING') return messageLogs.value.filter(l => l.type !== 'INCOMING')
+    return messageLogs.value
+})
+
+const webhookUrl = computed(() => {
+    const origin = window.location.origin
+    return `${origin}/api/webhook`
+})
+
+const formatDate = (date: string | Date) => {
+    return new Intl.DateTimeFormat('id-ID', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    }).format(new Date(date))
+}
+
+const copyWebhook = async () => {
+    try {
+        await navigator.clipboard.writeText(webhookUrl.value)
+        copied.value = true
+        toast({
+            title: 'Copied',
+            description: 'Webhook URL copied to clipboard',
+            variant: 'success'
+        })
+        setTimeout(() => { copied.value = false }, 2000)
+    } catch (err) {
+        console.error('Failed to copy', err)
+    }
+}
+
+const fetchLogs = async () => {
+    loadingLogs.value = true
+    try {
+        const res = await api.getLogs(1, 30) as any
+        messageLogs.value = res.data || []
+    } catch (err) {
+        console.error('Failed to fetch logs', err)
+    } finally {
+        loadingLogs.value = false
+    }
+}
 
 const checkStatus = async () => {
     checkingStatus.value = true
@@ -164,6 +297,7 @@ const checkStatus = async () => {
 onMounted(() => {
     if (props.form.waEnabled) {
         checkStatus()
+        fetchLogs()
     }
 })
 </script>

@@ -90,27 +90,88 @@ export class WhatsappService {
         }
     }
 
+    async checkPhone(phone: string) {
+        try {
+            const { baseUrl, apiKey, instanceId } = await this.getConfig();
+
+            // Sanitize number
+            let sanitizedPhone = phone.replace(/\D/g, '');
+            // Case 08... -> 628...
+            if (sanitizedPhone.startsWith('08')) sanitizedPhone = '62' + sanitizedPhone.substring(1);
+            // Case 6208... -> 628...
+            else if (sanitizedPhone.startsWith('6208')) sanitizedPhone = '62' + sanitizedPhone.substring(3);
+            // Case 8... (no prefix) -> 628...
+            else if (sanitizedPhone.startsWith('8')) sanitizedPhone = '62' + sanitizedPhone;
+            // Case 62... (already correct)
+            else if (!sanitizedPhone.startsWith('62')) sanitizedPhone = '62' + sanitizedPhone;
+
+            console.log(`[WhatsApp] Checking number: ${phone} -> ${sanitizedPhone}`);
+
+            const res = await fetch(`${baseUrl}/instances/${instanceId}/actions/check-phone`, {
+                method: 'POST',
+                headers: this.getHeaders(apiKey),
+                body: JSON.stringify({ phones: [sanitizedPhone] })
+            });
+
+            if (!res.ok) {
+                const errText = await res.text();
+                console.error(`[WhatsApp] ❌ API Error: ${res.status} - ${errText}`);
+                throw new Error(`API Error: ${res.status}`);
+            }
+            const data = await res.json();
+            console.log(`[WhatsApp] Check result for ${sanitizedPhone}:`, JSON.stringify(data));
+
+            // Wainthego results format (based on actual response): { results: [{ Query, JID, IsIn }] }
+            // Some versions might use: { results: [{ phone, exists, jid }] }
+            const result = data.results?.find((r: any) => {
+                const phoneVal = (r.phone || r.Query || r.JID || '').toString();
+                return phoneVal.includes(sanitizedPhone) || sanitizedPhone.includes(phoneVal);
+            }) || data.results?.[0];
+
+            return {
+                exists: result?.exists ?? result?.IsIn ?? false,
+                jid: result?.jid || result?.JID || null,
+                phone: sanitizedPhone
+            };
+        } catch (e) {
+            console.error('[WhatsApp] Check Phone Error:', e);
+            throw e;
+        }
+    }
+
     async sendMessage(to: string, message: string, type: 'BILL' | 'RECEIPT' | 'REMINDER' | 'OTHER' = 'OTHER', userId?: number, billId?: number) {
         try {
             const { baseUrl, apiKey, instanceId } = await this.getConfig();
 
             console.log(`[WhatsApp] Sending message to ${to}`);
-            console.log(`[WhatsApp] Config - URL: ${baseUrl}, Instance: ${instanceId}, API Key: ${apiKey ? 'SET' : 'MISSING'}`);
 
-            // Sanitize number for Wainthego
-            let phone = to.replace(/\D/g, '');
-            if (phone.startsWith('08')) phone = '628' + phone.substring(2);
-            if (!phone.startsWith('62')) phone = '62' + phone;
+            // 1. Sanitize & Validate Phone
+            const check = await this.checkPhone(to);
+            if (!check.exists) {
+                console.warn(`[WhatsApp] ❌ Number ${to} (${check.phone}) is NOT on WhatsApp. Aborting.`);
 
-            console.log(`[WhatsApp] Sanitized phone: ${phone}`);
+                // Record failure in database
+                await db.insert(whatsappLogs).values({
+                    recipient: to,
+                    userId: userId || null,
+                    billId: billId || null,
+                    message: message,
+                    type: type,
+                    status: 'FAILED',
+                    waMessageId: null
+                });
+
+                throw new Error(`Nomor ${to} tidak terdaftar di WhatsApp.`);
+            }
+
+            const phone = check.phone;
+            console.log(`[WhatsApp] Sanitized & Verified phone: ${phone}`);
 
             const payload = {
                 phone,
                 message,
                 type: 'text'
             };
-
-            console.log(`[WhatsApp] Calling ${baseUrl}/instances/${instanceId}/messages`);
 
             const res = await fetch(`${baseUrl}/instances/${instanceId}/messages`, {
                 method: 'POST',
@@ -135,8 +196,6 @@ export class WhatsappService {
                 status: success ? 'SENT' : 'FAILED',
                 waMessageId: messageId
             });
-
-            console.log(`[WhatsApp] Message logged to database with status: ${success ? 'SENT' : 'FAILED'}`);
 
             if (!success) {
                 throw new Error(result.message || 'Failed to send message');
@@ -171,7 +230,6 @@ export class WhatsappService {
                     });
                     if (res.ok) {
                         const { status } = await res.json();
-                        // Wainthego: sent, delivered, read, failed
                         const newStatus = status.toUpperCase();
 
                         if (newStatus !== 'UNKNOWN' && newStatus !== log.status) {

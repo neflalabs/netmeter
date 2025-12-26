@@ -34,6 +34,7 @@ export interface Settings {
     waServiceUrl?: string;
     waApiKey?: string;
     waInstanceId?: string;
+    waWebhookSecret?: string;
     autoNotifyNewBill?: boolean;
     autoNotifyPaymentSuccess?: boolean;
     autoReminderEnabled?: boolean;
@@ -81,6 +82,7 @@ export interface UpdateSettingsDTO {
     waServiceUrl?: string;
     waApiKey?: string;
     waInstanceId?: string;
+    waWebhookSecret?: string;
     autoNotifyNewBill?: boolean;
     autoNotifyPaymentSuccess?: boolean;
     autoReminderEnabled?: boolean;

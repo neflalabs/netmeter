@@ -2,11 +2,16 @@ import { Hono } from 'hono'
 import { whatsappService } from '../services/whatsapp'
 import { db } from '../db'
 import { whatsappLogs, users } from '@netmeter/db'
-import { desc, eq, sql } from 'drizzle-orm'
+import { desc, eq, sql, and } from 'drizzle-orm'
 import { zValidator } from '@hono/zod-validator'
+import { z } from 'zod'
 import { paginationSchema, whatsappSendSchema } from '@netmeter/shared'
 
 const app = new Hono()
+
+const logsQuerySchema = paginationSchema.extend({
+    type: z.enum(['BILL', 'RECEIPT', 'REMINDER', 'INCOMING', 'OTHER']).optional(),
+})
 
 app.get('/status', async (c) => {
     const status = await whatsappService.getStatus()
@@ -40,14 +45,28 @@ app.post('/sync', async (c) => {
     return c.json(res)
 })
 
-app.get('/logs', zValidator('query', paginationSchema), async (c) => {
+app.get('/check-phone', zValidator('query', z.object({ phone: z.string() })), async (c) => {
     try {
-        const { page, limit } = c.req.valid('query')
+        const { phone } = c.req.valid('query')
+        const res = await whatsappService.checkPhone(phone)
+        return c.json(res)
+    } catch (e: any) {
+        return c.json({ error: e.message }, 500)
+    }
+})
+
+app.get('/logs', zValidator('query', logsQuerySchema), async (c) => {
+    try {
+        const { page, limit, type } = c.req.valid('query')
         const offset = (page - 1) * limit
+
+        // Build where clause
+        const whereClause = type ? eq(whatsappLogs.type, type) : undefined
 
         // 1. Get total logs count for pagination
         const [totalCount] = await db.select({ count: sql<number>`count(*)` })
             .from(whatsappLogs)
+            .where(whereClause)
 
         // 2. Get paginated logs
         const logs = await db.select({
@@ -61,6 +80,7 @@ app.get('/logs', zValidator('query', paginationSchema), async (c) => {
         })
             .from(whatsappLogs)
             .leftJoin(users, eq(whatsappLogs.userId, users.id))
+            .where(whereClause)
             .orderBy(desc(whatsappLogs.createdAt))
             .limit(limit)
             .offset(offset)

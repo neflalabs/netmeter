@@ -51,7 +51,7 @@
         </template>
       </div>
       <span class="text-[8px] font-bold tracking-[0.2em] text-muted-foreground uppercase opacity-70">
-        {{ subtitle || 'Billing System' }}
+        {{ subtitle }}
       </span>
     </div>
   </div>

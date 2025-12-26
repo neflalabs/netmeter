@@ -54,6 +54,7 @@ export const settings = sqliteTable('settings', {
     waServiceUrl: text('wa_service_url').default('http://localhost:3030/api/v1'), // Default URL
     waApiKey: text('wa_api_key').default(''), // Default empty
     waInstanceId: text('wa_instance_id').default('main'), // Default instance
+    waWebhookSecret: text('wa_webhook_secret').default(''), // Secret for webhook verification
     autoNotifyNewBill: integer('auto_notify_new_bill', { mode: 'boolean' }).default(false),
     autoNotifyPaymentSuccess: integer('auto_notify_payment_success', { mode: 'boolean' }).default(false),
     autoReminderEnabled: integer('auto_reminder_enabled', { mode: 'boolean' }).default(false),

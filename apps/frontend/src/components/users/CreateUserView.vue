@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { Save, BellRing } from 'lucide-vue-next'
+import { Save, BellRing, RefreshCcw, Check, X } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
@@ -13,6 +13,7 @@ import Footer from '@/components/Footer.vue'
 import Header from '@/components/Header.vue'
 import type { CreateUserDTO } from '@/types'
 import Switch from '@/components/ui/Switch.vue'
+import { whatsappApi } from '@/api'
 
 
 import { useToast } from '@/composables/useToast'
@@ -39,6 +40,46 @@ const form = ref<CreateUserDTO>({
     reminderInterval: undefined,
     reminderEnabled: true
 })
+
+const isCheckingPhone = ref(false)
+const phoneVerified = ref(false)
+const phoneExists = ref(false)
+
+const waApi = whatsappApi()
+
+const handleCheckPhone = async () => {
+    if (!form.value.whatsapp) return
+    
+    isCheckingPhone.value = true
+    try {
+        const res = await waApi.checkPhone(form.value.whatsapp) as any
+        phoneExists.value = res.exists
+        phoneVerified.value = true
+        
+        if (res.exists) {
+            toast({
+                title: 'Nomor Valid',
+                description: 'Nomor terdaftar di WhatsApp.',
+                variant: 'success'
+            })
+        } else {
+            toast({
+                title: 'Nomor Tidak Valid',
+                description: 'Nomor TIDAK terdaftar di WhatsApp.',
+                variant: 'destructive'
+            })
+        }
+    } catch (err) {
+        console.error('Check phone failed', err)
+        toast({
+            title: 'Gagal Cek',
+            description: 'Terjadi kesalahan saat mengecek nomor.',
+            variant: 'destructive'
+        })
+    } finally {
+        isCheckingPhone.value = false
+    }
+}
 
 onMounted(async () => {
     try {
@@ -106,11 +147,36 @@ const handleSubmit = async () => {
                 
                 <div class="space-y-2">
                     <Label for="wa">Nomor WhatsApp</Label>
-                    <div class="relative">
+                    <div class="relative flex items-center">
                          <span class="absolute left-3 top-2.5 text-muted-foreground text-sm font-medium">+62</span>
-                        <Input id="wa" v-model="form.whatsapp" class="pl-12" placeholder="8123xxxxxxx" type="tel" />
+                        <Input 
+                            id="wa" 
+                            v-model="form.whatsapp" 
+                            class="pl-12 pr-20" 
+                            placeholder="8123xxxxxxx" 
+                            type="tel" 
+                            @input="phoneVerified = false"
+                        />
+                        <div class="absolute right-1 flex items-center gap-1">
+                            <div v-if="phoneVerified" class="mr-1">
+                                <Check v-if="phoneExists" class="w-4 h-4 text-emerald-500" />
+                                <X v-else class="w-4 h-4 text-destructive" />
+                            </div>
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                class="h-8 px-2 text-[10px] font-bold text-primary hover:bg-primary/10"
+                                @click="handleCheckPhone"
+                                :disabled="isCheckingPhone || !form.whatsapp"
+                            >
+                                <RefreshCcw v-if="isCheckingPhone" class="w-2.5 h-2.5 mr-1 animate-spin" />
+                                CHECK
+                            </Button>
+                        </div>
                     </div>
-                    <p class="text-[10px] text-muted-foreground">Nomor ini akan digunakan untuk notifikasi tagihan.</p>
+                    <p class="text-[10px]" :class="phoneVerified && !phoneExists ? 'text-destructive' : 'text-muted-foreground'">
+                        {{ phoneVerified && !phoneExists ? 'Nomor ini tidak terdaftar di WhatsApp!' : 'Nomor ini akan digunakan untuk notifikasi tagihan.' }}
+                    </p>
                 </div>
 
                 <div class="space-y-2">
@@ -164,7 +230,7 @@ const handleSubmit = async () => {
                             <Label class="text-xs font-medium">Aktifkan Reminder</Label>
                             <p class="text-[10px] text-muted-foreground">Kirim pesan pengingat otomatis</p>
                         </div>
-                        <Switch :model-value="!!form.reminderEnabled" @update:model-value="val => form.reminderEnabled = val" />
+                        <Switch :model-value="!!form.reminderEnabled" @update:model-value="(val: boolean) => form.reminderEnabled = val" />
                     </div>
                 </div>
 

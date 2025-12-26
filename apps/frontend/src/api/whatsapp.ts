@@ -20,12 +20,18 @@ export const whatsappApi = () => {
         return api.post(API_ENDPOINTS.WHATSAPP + '/logout')
     }
 
-    const getLogs = async (page = 1, limit = 20) => {
-        return api.get(`${API_ENDPOINTS.WHATSAPP}/logs?page=${page}&limit=${limit}`)
+    const getLogs = async (page = 1, limit = 20, type?: string) => {
+        let url = `${API_ENDPOINTS.WHATSAPP}/logs?page=${page}&limit=${limit}`
+        if (type) url += `&type=${type}`
+        return api.get(url)
     }
 
     const syncLogs = async () => {
         return api.post(API_ENDPOINTS.WHATSAPP + '/sync')
+    }
+
+    const checkPhone = async (phone: string) => {
+        return api.get(`${API_ENDPOINTS.WHATSAPP}/check-phone?phone=${phone}`)
     }
 
     return {
@@ -34,6 +40,7 @@ export const whatsappApi = () => {
         login,
         logout,
         getLogs,
-        syncLogs
+        syncLogs,
+        checkPhone
     }
 }

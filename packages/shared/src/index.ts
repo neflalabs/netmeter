@@ -42,6 +42,7 @@ export const settingsSchema = z.object({
     waServiceUrl: z.string().url().or(z.string().length(0)).optional().nullable(),
     waApiKey: z.string().optional().nullable(),
     waInstanceId: z.string().optional().nullable(),
+    waWebhookSecret: z.string().optional().nullable(),
     autoNotifyNewBill: z.boolean().optional().nullable(),
     autoNotifyPaymentSuccess: z.boolean().optional().nullable(),
     autoReminderEnabled: z.boolean().optional().nullable(),

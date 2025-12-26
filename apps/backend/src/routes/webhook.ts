@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import { db } from '../db';
-import { whatsappLogs, users } from '@netmeter/db';
+import { whatsappLogs, users, settings } from '@netmeter/db';
 import { eq, or, like } from 'drizzle-orm';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 
 const app = new Hono();
 
@@ -24,9 +25,37 @@ function extractMessageText(message: any): string {
  * 1. Status updates (sent/read/delivered) - 'event' based format
  * 2. Incoming messages - 'Info'/'Message' object format
  */
-app.post('/wainthego', async (c) => {
+app.post('/', async (c) => {
     try {
-        const payload = await c.req.json();
+        const signature = c.req.header('X-Wainthego-Signature');
+        const rawBody = await c.req.text();
+        // We use .text() instead of .json() because signature verification (HMAC) 
+        // requires the EXACT raw body content to match. Re-stringifying a JSON object
+        // might change property order or whitespace, which would break the signature.
+        const payload = JSON.parse(rawBody);
+
+        // --- Verify Signature if Secret is configured ---
+        const [appSettings] = await db.select().from(settings).limit(1);
+        if (appSettings?.waWebhookSecret) {
+            if (!signature) {
+                console.error('[Webhook] ❌ Missing signature header but secret is configured');
+                return c.json({ error: 'Missing signature' }, 401);
+            }
+
+            const hmac = createHmac('sha256', appSettings.waWebhookSecret);
+            hmac.update(rawBody);
+            const expectedSignature = hmac.digest('hex');
+
+            // Use timingSafeEqual to prevent timing attacks
+            const signatureBuffer = Buffer.from(signature);
+            const expectedBuffer = Buffer.from(expectedSignature);
+
+            if (signatureBuffer.length !== expectedBuffer.length || !timingSafeEqual(signatureBuffer, expectedBuffer)) {
+                console.error('[Webhook] ❌ Invalid signature');
+                return c.json({ error: 'Invalid signature' }, 401);
+            }
+            // console.log('[Webhook] ✅ Signature verified');
+        }
 
         // console.log('[Webhook] Received:', JSON.stringify(payload, null, 2));
 
@@ -45,13 +74,16 @@ app.post('/wainthego', async (c) => {
             // extract phone number (remove @s.whatsapp.net)
             const phoneNumber = sender.replace('@s.whatsapp.net', '');
 
-            // Try to find user
+            // Try to find user with robust matching (handle 62, 0, or just suffix)
+            const cleanPhone = phoneNumber.startsWith('62') ? phoneNumber.substring(2) : (phoneNumber.startsWith('0') ? phoneNumber.substring(1) : phoneNumber);
+
             const user = await db.select()
                 .from(users)
                 .where(or(
                     eq(users.whatsapp, phoneNumber),
-                    eq(users.whatsapp, `0${phoneNumber.substring(2)}`), // Handle 62 vs 0 prefix if needed
-                    like(users.whatsapp, `%${phoneNumber.substring(2)}`) // fuzzy match end
+                    eq(users.whatsapp, `0${cleanPhone}`),
+                    eq(users.whatsapp, `62${cleanPhone}`),
+                    like(users.whatsapp, `%${cleanPhone}`)
                 ))
                 .limit(1);
 
