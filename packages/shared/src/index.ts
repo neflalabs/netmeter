@@ -59,6 +59,10 @@ export const settingsSchema = z.object({
     midtransClientKey: z.string().optional().nullable(),
     midtransEnvironment: z.enum(['sandbox', 'production']).optional().nullable(),
     qrisRawString: z.string().optional().nullable(),
+    xenditEnabled: z.boolean().optional().nullable(),
+    xenditSecretKey: z.string().optional().nullable(),
+    xenditVerificationToken: z.string().optional().nullable(),
+    xenditEnvironment: z.enum(['sandbox', 'production']).optional().nullable(),
 });
 
 export const idParamSchema = z.object({

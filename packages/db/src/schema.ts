@@ -78,8 +78,14 @@ export const settings = sqliteTable('settings', {
     midtransClientKey: text('midtrans_client_key'),
     midtransEnvironment: text('midtrans_environment').default('sandbox'),
 
+    // Xendit Configuration
+    xenditEnabled: integer('xendit_enabled', { mode: 'boolean' }).default(false),
+    xenditSecretKey: text('xendit_secret_key'),
+    xenditVerificationToken: text('xendit_verification_token'),
+    xenditEnvironment: text('xendit_environment').default('sandbox'),
+
     updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
-});
+})
 
 export const bills = sqliteTable('bills', {
     id: integer('id').primaryKey({ autoIncrement: true }),

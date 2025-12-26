@@ -175,7 +175,11 @@ const form = ref<UpdateSettingsDTO>({
   quietHoursEnd: '08:00',
   quietHoursWeekend: true,
   reminderTime: '09:00',
-  autoBillTime: '09:00'
+  autoBillTime: '09:00',
+  xenditEnabled: false,
+  xenditSecretKey: '',
+  xenditVerificationToken: '',
+  xenditEnvironment: 'sandbox'
 })
 
 const fetchSettings = async () => {
@@ -199,10 +203,10 @@ const waCardVariant = computed(() => {
     if (!form.value.waEnabled) return 'secondary'
     return waStatus.value === 'CONNECTED' ? 'success' : 'danger'
 })
-
 const paymentStatusVariant = computed(() => {
-    if (form.value.midtransEnabled) {
-        return form.value.midtransEnvironment === 'production' ? 'success' : 'warning'
+    if (form.value.midtransEnabled || form.value.xenditEnabled) {
+        if (form.value.midtransEnvironment === 'production' || form.value.xenditEnabled) return 'success'
+        return 'warning'
     }
     if (form.value.qrisPaymentEnabled || form.value.manualPaymentEnabled) return 'success'
     return 'secondary'
@@ -210,15 +214,15 @@ const paymentStatusVariant = computed(() => {
 
 const paymentStatusText = computed(() => {
     const hasMidtrans = form.value.midtransEnabled
+    const hasXendit = form.value.xenditEnabled
     const hasManual = form.value.manualPaymentEnabled || form.value.qrisPaymentEnabled
     
-    if (hasMidtrans && hasManual) {
-         const mtText = form.value.midtransEnvironment === 'production' ? 'Midtrans' : 'Sandbox'
-         return `${mtText} & Manual`
-    }
+    const gateways = []
+    if (hasMidtrans) gateways.push(form.value.midtransEnvironment === 'production' ? 'Midtrans' : 'Midtrans Sandbox')
+    if (hasXendit) gateways.push(form.value.xenditEnvironment === 'production' ? 'Xendit' : 'Xendit Sandbox')
     
-    if (hasMidtrans) {
-        return form.value.midtransEnvironment === 'production' ? 'Midtrans Live' : 'Midtrans Sandbox'
+    if (gateways.length > 0) {
+        return gateways.join(' & ') + (hasManual ? ' & Manual' : '')
     }
 
     if (form.value.qrisPaymentEnabled && form.value.manualPaymentEnabled) return 'QRIS & Manual'
@@ -228,8 +232,9 @@ const paymentStatusText = computed(() => {
 })
 
 const paymentStatusIcon = computed(() => {
-    if (form.value.midtransEnabled) {
-        return form.value.midtransEnvironment === 'production' ? CheckCircle2 : AlertCircle
+    if (form.value.midtransEnabled || form.value.xenditEnabled) {
+        if (form.value.midtransEnvironment === 'production' || form.value.xenditEnabled) return CheckCircle2
+        return AlertCircle
     }
     if (form.value.qrisPaymentEnabled || form.value.manualPaymentEnabled) return CheckCircle2
     return XCircle

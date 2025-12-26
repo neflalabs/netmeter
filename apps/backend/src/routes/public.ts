@@ -17,7 +17,10 @@ app.get('/bills', async (c) => {
             year: bills.year,
             userName: users.name,
             amount: bills.amount,
-            paidAt: bills.paidAt
+            paidAt: bills.paidAt,
+            paymentMethod: payments.method,
+            paymentType: payments.paymentType,
+            issuer: payments.issuer
         })
             .from(bills)
             .innerJoin(users, eq(bills.userId, users.id))

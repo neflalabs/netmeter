@@ -92,12 +92,34 @@ const yearData = computed(() => {
 
         return {
             name: monthName,
-            users: monthlyBills.map(b => b.userName)
+            users: monthlyBills.map(b => ({
+                name: b.userName,
+                method: b.paymentMethod,
+                type: b.paymentType,
+                issuer: b.issuer
+            }))
         }
     })
 
     return currentYearMonths.slice(0, appSettings.value.listingPerHome)
 })
+
+const getPaymentLabel = (user: any) => {
+    if (user.method === 'CASH') return 'Tunai'
+    if (user.method === 'MANUAL_TRANSFER') return 'Qris Statis'
+    if (user.method === 'MIDTRANS' || user.method === 'XENDIT') {
+        const issuer = user.issuer || user.type || (user.method === 'XENDIT' ? 'Xendit' : 'System')
+        return `PG-${issuer.charAt(0).toUpperCase() + issuer.slice(1).toLowerCase()}`
+    }
+    return 'LUNAS'
+}
+
+const getPaymentColorClass = (method: string) => {
+    if (method === 'CASH') return 'text-slate-600 dark:text-slate-400 bg-slate-500/10'
+    if (method === 'MANUAL_TRANSFER') return 'text-orange-600 dark:text-orange-400 bg-orange-500/10'
+    if (method === 'MIDTRANS' || method === 'XENDIT') return 'text-blue-600 dark:text-blue-400 bg-blue-500/10'
+    return 'text-green-600 dark:text-green-400 bg-green-500/10'
+}
 
 </script>
 
@@ -162,16 +184,18 @@ const yearData = computed(() => {
                     
                     <div class="p-6 pt-2 animate-in slide-in-from-top-4 duration-300">
                         <div v-if="month.users.length > 0" class="flex flex-col gap-3">
-                             <div v-for="(user, idx) in month.users" :key="user" 
+                             <div v-for="(user, idx) in month.users" :key="user.name" 
                                   class="flex items-center justify-between text-sm text-foreground bg-secondary/30 p-4 rounded-xl border border-border/50 group hover:border-blue-500/30 hover:bg-secondary transition-all duration-200"
                                   :style="{ animationDelay: `${idx * 50}ms` }"
                              >
                                 <span class="font-bold flex items-center gap-3">
-                                    <UserAvatar :name="user" size="md" />
-                                    {{ user }}
+                                    <UserAvatar :name="user.name" size="md" />
+                                    {{ user.name }}
                                 </span>
                                 <div class="flex items-center gap-2">
-                                    <span class="text-[10px] font-bold text-green-600 dark:text-green-400 bg-green-500/10 px-2 py-0.5 rounded-full">LUNAS</span>
+                                    <span :class="['text-[10px] font-bold px-2 py-0.5 rounded-full uppercase', getPaymentColorClass(user.method)]">
+                                        {{ getPaymentLabel(user) }}
+                                    </span>
                                     <CheckCircle2 class="w-5 h-5 text-green-500" />
                                 </div>
                             </div>
@@ -212,7 +236,7 @@ const yearData = computed(() => {
                     </div>
                     
                     <div class="flex items-center gap-4">
-                         <UserAvatarStack v-if="month.users.length > 0" :users="month.users" :limit="3" />
+                         <UserAvatarStack v-if="month.users.length > 0" :users="month.users.map(u => u.name)" :limit="3" />
                          <ChevronDown class="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                     </div>
                 </div>

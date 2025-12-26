@@ -68,6 +68,15 @@ app.put('/', zValidator('json', settingsSchema), async (c) => {
                 });
             }
 
+            const xenditConfigChanged =
+                storedSettings[0].xenditEnabled !== values.xenditEnabled ||
+                storedSettings[0].xenditSecretKey !== values.xenditSecretKey ||
+                storedSettings[0].xenditEnvironment !== values.xenditEnvironment;
+
+            if (xenditConfigChanged) {
+                console.log('Xendit config changed');
+            }
+
             return c.json(updated[0]);
         }
     } catch (e) {

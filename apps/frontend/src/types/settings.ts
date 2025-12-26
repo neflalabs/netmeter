@@ -20,11 +20,17 @@ export interface Settings {
     manualPaymentEnabled?: boolean
     qrisPaymentEnabled?: boolean
     manualPaymentDetails?: string;
+    qrisRawString?: string;
 
     midtransEnabled?: boolean;
     midtransServerKey?: string;
     midtransClientKey?: string;
     midtransEnvironment?: 'sandbox' | 'production';
+
+    xenditEnabled?: boolean;
+    xenditSecretKey?: string;
+    xenditVerificationToken?: string;
+    xenditEnvironment?: 'sandbox' | 'production';
 
     // Notification Features
     reminderTemplate?: string;
@@ -73,6 +79,11 @@ export interface UpdateSettingsDTO {
     midtransServerKey?: string;
     midtransClientKey?: string;
     midtransEnvironment?: 'sandbox' | 'production';
+
+    xenditEnabled?: boolean;
+    xenditSecretKey?: string;
+    xenditVerificationToken?: string;
+    xenditEnvironment?: 'sandbox' | 'production';
 
     // Notification Features
     reminderTemplate?: string;
