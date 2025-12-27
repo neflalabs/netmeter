@@ -42,9 +42,9 @@ export const settings = sqliteTable('settings', {
     announcementType: text('announcement_type', { enum: ['INFO', 'WARNING', 'SUCCESS', 'DANGER'] }).default('INFO'),
     announcementActive: integer('announcement_active', { mode: 'boolean' }).default(false),
 
-    billTemplate: text('bill_template').default('Assalamualaikum {name}, patungan bulan {month} / {year} sebesar Rp. {amount} sudah bisa dibayar.{br} Untuk membayar secara otomatis, klik di sini: {link} {br}{br} Pesan ini dikirim otomatis oleh aplikasi.'),
-    paymentTemplate: text('payment_template').default('Assalamualaikum {name}, patungan sebesar Rp. {amount} via {method} sudah diterima. detailnya bisa cek disini : {link} {br} Maturnuwun! {br}{br} Pesan ini dikirim otomatis oleh aplikasi.'),
-    reminderTemplate: text('reminder_template').default('Assalamualaikum {name}, sekadar mengingatkan patungan WiFi bulan {month} / {year} sebesar Rp. {amount} belum lunas. Jika sudah bayar, abaikan pesan ini: {link} {br}{br} Pesan ini dikirim otomatis oleh aplikasi.'),
+    billTemplate: text('bill_template').default('Assalamualaikum {name}, patungan bulan {month} / {year} sebesar Rp. {amount} sudah bisa dibayar.{br} Untuk membayar secara otomatis, klik di sini: {link} {br}{br} _Pesan ini dikirim otomatis oleh aplikasi._'),
+    paymentTemplate: text('payment_template').default('Assalamualaikum {name}, patungan sebesar Rp. {amount} via {method} sudah diterima. detailnya bisa cek disini : {link} {br} Maturnuwun! {br}{br} _Pesan ini dikirim otomatis oleh aplikasi._'),
+    reminderTemplate: text('reminder_template').default('Assalamualaikum {name}, sekadar mengingatkan patungan WiFi bulan {month} / {year} sebesar Rp. {amount} belum lunas. Jika sudah bayar, abaikan pesan ini: {link} {br}{br} _Pesan ini dikirim otomatis oleh aplikasi._'),
 
     // Global Notification Config
     globalDueDay: integer('global_due_day').default(10), // Default day 10
@@ -53,7 +53,7 @@ export const settings = sqliteTable('settings', {
     waEnabled: integer('wa_enabled', { mode: 'boolean' }).default(false),
     waServiceUrl: text('wa_service_url').default('http://localhost:3030/api/v1'), // Default URL
     waApiKey: text('wa_api_key').default(''), // Default empty
-    waInstanceId: text('wa_instance_id').default('main'), // Default instance
+    waInstanceId: text('wa_instance_id').default(''), // Default instance
     waWebhookSecret: text('wa_webhook_secret').default(''), // Secret for webhook verification
     autoNotifyNewBill: integer('auto_notify_new_bill', { mode: 'boolean' }).default(false),
     autoNotifyPaymentSuccess: integer('auto_notify_payment_success', { mode: 'boolean' }).default(false),

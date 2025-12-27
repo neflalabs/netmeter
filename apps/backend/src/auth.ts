@@ -11,13 +11,13 @@ const loginAttempts = new Map<string, { count: number, resetAt: number }>();
 const rateLimiter = async (c: any, next: any) => {
     const ip = c.req.header('x-forwarded-for') || 'unknown';
     const now = Date.now();
-    const windowMs = 15 * 60 * 1000; // 15 minutes
-    const maxAttempts = 10;
+    const windowMs = 20 * 60 * 1000; // 20 minutes
+    const maxAttempts = 5;
 
     const attempt = loginAttempts.get(ip);
 
     if (attempt && attempt.resetAt > now && attempt.count >= maxAttempts) {
-        return c.json({ error: 'Too many login attempts. Please try again in 15 minutes.' }, 429);
+        return c.json({ error: 'Too many login attempts. Please try again in 20 minutes.' }, 429);
     }
 
     await next();

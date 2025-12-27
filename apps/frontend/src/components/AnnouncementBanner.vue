@@ -23,7 +23,7 @@
     <!-- Body -->
     <div class="px-5 py-4" :class="variants[type].body">
         <div 
-            class="text-sm leading-relaxed text-justify prose prose-sm max-w-none prose-strong:text-current prose-p:text-current prose-headings:text-current prose-li:text-current" 
+            class="text-sm leading-relaxed text-justify prose prose-sm max-w-none prose-strong:text-current prose-p:text-current prose-headings:text-current prose-li:text-current prose-a:text-current prose-a:underline hover:prose-a:opacity-80 transition-opacity" 
             :class="variants[type].textColor"
             v-html="message"
         ></div>

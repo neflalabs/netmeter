@@ -1,40 +1,34 @@
 name: netmeter
-
 services:
-  backend:
-    container_name: netmeter-backend
-    image: oven/bun:latest
-    working_dir: /app
-    env_file: .env
-    # ports:
-    #   - "3000:3000" # Not needed, frontend proxies to backend:3000 internal
-    volumes:
-      - .:/app
-      - ./data:/data
-    environment:
-      - DATABASE_URL=file:/data/netmeter.db
-    command: /bin/sh -c "mkdir -p /data && bun install && bun run --filter @netmeter/db migrate && DATABASE_URL=$$DATABASE_URL bun run --filter backend dev"
-    restart: unless-stopped
+    backend:
+        container_name: netmeter-backend
+        image: oven/bun:latest
+        working_dir: /app
+        env_file: .env
+        # ports:
+        #   - "3000:3000" # Not needed, frontend proxies to backend:3000 internal
+        volumes:
+            - .:/app
+            - ./data:/data
+        environment:
+            - DATABASE_URL=file:/data/netmeter.db
+        command: /bin/sh -c "mkdir -p /data && bun install && bun run --filter @netmeter/db migrate && DATABASE_URL=$$DATABASE_URL bun run --filter backend dev"
+        restart: unless-stopped
 
-  frontend:
-    container_name: netmeter-frontend
-    image: oven/bun:latest
-    working_dir: /app
-    ports:
-      - "8004:5173"
-    volumes:
-      - .:/app
-    command: /bin/sh -c "bun install && bun run --filter frontend dev"
-    restart: unless-stopped
-    networks:
-      - default
-      - proxynpm
-
-  # frontend:
-  #   ...
-
+    frontend:
+        container_name: netmeter-frontend
+        image: oven/bun:latest
+        working_dir: /app
+        ports:
+            - "8004:5173"
+        volumes:
+            - .:/app
+        command: /bin/sh -c "bun install && bun run --filter frontend dev"
+        restart: unless-stopped
+        networks:
+            - default
+            - proxynpm
 
 networks:
-  proxynpm:
-    external: true
-
+    proxynpm:
+        external: true

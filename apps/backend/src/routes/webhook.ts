@@ -29,9 +29,7 @@ app.post('/', async (c) => {
     try {
         const signature = c.req.header('X-Wainthego-Signature');
         const rawBody = await c.req.text();
-        // We use .text() instead of .json() because signature verification (HMAC) 
-        // requires the EXACT raw body content to match. Re-stringifying a JSON object
-        // might change property order or whitespace, which would break the signature.
+
         const payload = JSON.parse(rawBody);
 
         // --- Verify Signature if Secret is configured ---
@@ -46,33 +44,41 @@ app.post('/', async (c) => {
             hmac.update(rawBody);
             const expectedSignature = hmac.digest('hex');
 
-            // Use timingSafeEqual to prevent timing attacks
             const signatureBuffer = Buffer.from(signature);
             const expectedBuffer = Buffer.from(expectedSignature);
 
             if (signatureBuffer.length !== expectedBuffer.length || !timingSafeEqual(signatureBuffer, expectedBuffer)) {
                 console.error('[Webhook] ❌ Invalid signature');
+                console.log(`[Webhook] Expected: ${expectedSignature}`);
+                console.log(`[Webhook] Received: ${signature}`);
                 return c.json({ error: 'Invalid signature' }, 401);
             }
-            // console.log('[Webhook] ✅ Signature verified');
         }
 
         // console.log('[Webhook] Received:', JSON.stringify(payload, null, 2));
 
-        // --- Handle Incoming Messages (New Format) ---
-        if (payload.Info && payload.Message) {
-            const { Info, Message } = payload;
+        // --- Extract Message Data (Support both direct and wrapped formats) ---
+        const msgInfo = payload.Info || payload.data?.Info;
+        const msgMessage = payload.Message || payload.data?.Message;
 
-            const sender = Info.MessageSource?.Sender || Info.RemoteJid; // Fallback if RemoteJid exists
-            const pushName = Info.PushName || 'Unknown';
-            const messageId = Info.ID;
-            const text = extractMessageText(Message);
-            const isFromMe = Info.MessageSource?.IsFromMe || false;
+        // --- Handle Incoming Messages ---
+        if (msgInfo && msgMessage) {
+            // Prefer SenderAlt or Sender from MessageSource if available (often contains standard JID)
+            const rawSender = msgInfo.SenderAlt || msgInfo.MessageSource?.Sender || msgInfo.RemoteJid || '';
+            const pushName = msgInfo.PushName || 'Unknown';
+            const messageId = msgInfo.ID;
+            const text = extractMessageText(msgMessage);
+            const isFromMe = msgInfo.MessageSource?.IsFromMe || false;
 
-            console.log(`[Webhook] 📩 Incoming Message from ${pushName} (${sender}): ${text.substring(0, 50)}${text.length > 50 ? '...' : ''}`);
+            // If it's from me, it's an outgoing message echo, usually we skip it 
+            if (isFromMe) {
+                return c.json({ success: true, message: 'Echo ignored' });
+            }
 
-            // extract phone number (remove @s.whatsapp.net)
-            const phoneNumber = sender.replace('@s.whatsapp.net', '');
+            // Extract digits only for the phone number part (handle :xx device IDs and @s.whatsapp.net)
+            const phoneNumber = rawSender.split('@')[0].split(':')[0];
+
+            console.log(`[Webhook] 📩 Incoming Message from ${pushName} (${phoneNumber}): ${text.substring(0, 50)}${text.length > 50 ? '...' : ''}`);
 
             // Try to find user with robust matching (handle 62, 0, or just suffix)
             const cleanPhone = phoneNumber.startsWith('62') ? phoneNumber.substring(2) : (phoneNumber.startsWith('0') ? phoneNumber.substring(1) : phoneNumber);
@@ -88,7 +94,6 @@ app.post('/', async (c) => {
                 .limit(1);
 
             const userId = user.length > 0 ? user[0].id : null;
-            const userName = user.length > 0 ? user[0].name : pushName;
 
             // Save to DB
             await db.insert(whatsappLogs).values({
@@ -105,9 +110,9 @@ app.post('/', async (c) => {
                 success: true,
                 message: 'Message received and saved',
                 details: {
-                    from: sender,
-                    id: messageId,
-                    type: Info.MediaType
+                    from: rawSender,
+                    phone: phoneNumber,
+                    id: messageId
                 }
             });
         }

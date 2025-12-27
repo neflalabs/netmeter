@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "8749fa5b-813c-49aa-ab26-781c1c04ab83",
+  "id": "5761600d-819d-44fa-a515-aeb1ced0bdcf",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "bills": {
@@ -475,6 +475,14 @@
           "autoincrement": false,
           "default": "'main'"
         },
+        "wa_webhook_secret": {
+          "name": "wa_webhook_secret",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "''"
+        },
         "auto_notify_new_bill": {
           "name": "auto_notify_new_bill",
           "type": "integer",
@@ -595,6 +603,36 @@
         },
         "midtrans_environment": {
           "name": "midtrans_environment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'sandbox'"
+        },
+        "xendit_enabled": {
+          "name": "xendit_enabled",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
+        },
+        "xendit_secret_key": {
+          "name": "xendit_secret_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "xendit_verification_token": {
+          "name": "xendit_verification_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "xendit_environment": {
+          "name": "xendit_environment",
           "type": "text",
           "primaryKey": false,
           "notNull": false,

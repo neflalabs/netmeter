@@ -117,6 +117,25 @@
                             >
                                 1. List
                             </button>
+                            <div class="w-px h-6 bg-border my-auto"></div>
+                            <button
+                                @click="setLink"
+                                :class="{ 'bg-primary text-primary-foreground': editor.isActive('link') }"
+                                class="px-3 py-1.5 rounded text-sm font-medium hover:bg-secondary transition-colors"
+                                title="Tambah Link"
+                                type="button"
+                            >
+                                <LinkIcon class="w-4 h-4" />
+                            </button>
+                            <button
+                                v-if="editor.isActive('link')"
+                                @click="editor.chain().focus().unsetLink().run()"
+                                class="px-3 py-1.5 rounded text-sm font-medium hover:bg-secondary transition-colors text-destructive"
+                                title="Hapus Link"
+                                type="button"
+                            >
+                                <Link2Off class="w-4 h-4" />
+                            </button>
                         </div>
 
                         <!-- Editor Content -->
@@ -150,7 +169,8 @@ import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
-import { Save } from 'lucide-vue-next'
+import Link from '@tiptap/extension-link'
+import { Save, Link as LinkIcon, Link2Off } from 'lucide-vue-next'
 import Card from '@/components/ui/Card.vue'
 import CardHeader from '@/components/ui/CardHeader.vue'
 import CardTitle from '@/components/ui/CardTitle.vue'
@@ -183,12 +203,39 @@ const editor = useEditor({
     Placeholder.configure({
       placeholder: 'Tulis isi pengumuman di sini...',
     }),
+    Link.configure({
+      openOnClick: false,
+      HTMLAttributes: {
+        class: 'transition-opacity hover:opacity-80 underline',
+      },
+    }),
   ],
   content: form.value.announcementMessage || '',
   onUpdate: ({ editor }) => {
     form.value.announcementMessage = editor.getHTML()
   },
 })
+
+const setLink = () => {
+  if (!editor.value) return
+
+  const previousUrl = editor.value.getAttributes('link').href
+  const url = window.prompt('URL', previousUrl)
+
+  // cancelled
+  if (url === null) {
+    return
+  }
+
+  // empty
+  if (url === '') {
+    editor.value.chain().focus().extendMarkRange('link').unsetLink().run()
+    return
+  }
+
+  // update link
+  editor.value.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+}
 
 const fetchSettings = async () => {
   const data = await settingsStore.fetchSettings(true)

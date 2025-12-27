@@ -1,6 +1,6 @@
 {
-    "name": "netmeter-monorepo",
-    "version": "1.0.0",
+    "name": "netmeter",
+    "version": "1.0.5",
     "private": true,
     "scripts": {
         "dev": "bun run --filter '*' dev",
@@ -18,7 +18,7 @@
     ],
     "dependencies": {
         "drizzle-orm": "^0.45.1",
-        "hono": "^4.11.1"
+        "hono": "^4.11.3"
     },
     "devDependencies": {
         "drizzle-kit": "^0.31.8"

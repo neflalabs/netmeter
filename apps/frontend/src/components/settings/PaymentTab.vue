@@ -3,20 +3,20 @@
     <!-- Manual Payment Section -->
     <div class="space-y-4 border rounded-lg p-4 bg-card">
       <div class="flex items-center justify-between">
-        <label class="text-base font-semibold">Transfer Manual / Tunai</label>
+        <label class="text-base font-semibold">Cash Payment</label>
         <div class="flex items-center">
-            <input 
-                type="checkbox" 
+            <input
+                type="checkbox"
                 v-model="form.manualPaymentEnabled"
-                class="w-5 h-5 accent-primary" 
+                class="w-5 h-5 accent-primary"
             />
         </div>
       </div>
-      <p class="text-sm text-muted-foreground">Aktifkan opsi pembayaran manual (Transfer Bank / Cash).</p>
+      <p class="text-sm text-muted-foreground">Aktifkan opsi pembayaran manual (Cash).</p>
 
       <div v-if="form.manualPaymentEnabled" class="space-y-2 pt-2">
         <Label>Instruksi Pembayaran / Info Rekening</Label>
-        <textarea 
+        <textarea
           v-model="form.manualPaymentDetails"
           class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[100px]"
           placeholder="Pembayaran Tunai masih dapat dilakukan dengan mendatangi menghubungi wa kami."
@@ -29,10 +29,10 @@
        <div class="flex items-center justify-between">
         <label class="text-base font-semibold">QRIS Static</label>
         <div class="flex items-center">
-            <input 
-                type="checkbox" 
+            <input
+                type="checkbox"
                 v-model="form.qrisPaymentEnabled"
-                class="w-5 h-5 accent-primary" 
+                class="w-5 h-5 accent-primary"
             />
         </div>
       </div>
@@ -43,9 +43,9 @@
         <div class="mt-4 p-4 border border-border rounded-lg bg-secondary/10">
             <div class="space-y-2">
                 <Label>QRIS Raw String</Label>
-                <textarea 
+                <textarea
                   v-model="form.qrisRawString"
-                  class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[80px] font-mono text-xs"
+                  class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[80px] font-mono"
                   placeholder="Paste QRIS text content here (00020101...)"
                 ></textarea>
                 <p class="text-[10px] text-muted-foreground">
@@ -60,10 +60,10 @@
        <div class="flex items-center justify-between">
         <label class="text-base font-semibold">Midtrans Payment Gateway</label>
         <div class="flex items-center">
-            <input 
-                type="checkbox" 
+            <input
+                type="checkbox"
                 v-model="form.midtransEnabled"
-                class="w-5 h-5 accent-primary" 
+                class="w-5 h-5 accent-primary"
             />
         </div>
       </div>
@@ -72,7 +72,7 @@
       <div v-if="form.midtransEnabled" class="space-y-4 pt-2">
         <div class="space-y-2">
             <Label>Environment</Label>
-            <select 
+            <select
                 v-model="form.midtransEnvironment"
                 class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ring-offset-background"
             >
@@ -83,18 +83,18 @@
 
         <div class="space-y-2">
           <Label>Server Key</Label>
-          <Input 
-            v-model="form.midtransServerKey" 
-            placeholder="SB-Mid-server-..." 
+          <Input
+            v-model="form.midtransServerKey"
+            placeholder="SB-Mid-server-..."
             type="password"
           />
         </div>
 
         <div class="space-y-2">
           <Label>Client Key</Label>
-          <Input 
-            v-model="form.midtransClientKey" 
-            placeholder="SB-Mid-client-..." 
+          <Input
+            v-model="form.midtransClientKey"
+            placeholder="SB-Mid-client-..."
           />
         </div>
 
@@ -102,9 +102,9 @@
             <Label>Notification URL (Webhook)</Label>
             <div class="flex items-center gap-2">
                 <div class="relative flex-1">
-                    <Input 
-                        :model-value="midtransWebhookUrl" 
-                        readonly 
+                    <Input
+                        :model-value="midtransWebhookUrl"
+                        readonly
                         class="bg-secondary/50 font-mono text-xs pr-10"
                     />
                 </div>
@@ -125,10 +125,10 @@
        <div class="flex items-center justify-between">
         <label class="text-base font-semibold">Xendit Payment Gateway</label>
         <div class="flex items-center">
-            <input 
-                type="checkbox" 
+            <input
+                type="checkbox"
                 v-model="form.xenditEnabled"
-                class="w-5 h-5 accent-primary" 
+                class="w-5 h-5 accent-primary"
             />
         </div>
       </div>
@@ -137,7 +137,7 @@
       <div v-if="form.xenditEnabled" class="space-y-4 pt-2">
         <div class="space-y-2">
             <Label>Environment</Label>
-            <select 
+            <select
                 v-model="form.xenditEnvironment"
                 class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ring-offset-background"
             >
@@ -149,18 +149,18 @@
 
         <div class="space-y-2">
           <Label>Secret Key</Label>
-          <Input 
-            v-model="form.xenditSecretKey" 
-            placeholder="xnd_development_..." 
+          <Input
+            v-model="form.xenditSecretKey"
+            placeholder="xnd_development_..."
             type="password"
           />
         </div>
 
         <div class="space-y-2">
           <Label>Validation Token (Optional)</Label>
-          <Input 
-            v-model="form.xenditVerificationToken" 
-            placeholder="Webhook Verification Token" 
+          <Input
+            v-model="form.xenditVerificationToken"
+            placeholder="Webhook Verification Token"
             type="password"
           />
           <p class="text-[10px] text-muted-foreground">Digunakan untuk memvalidasi bahwa webhook benar-benar dari Xendit.</p>
@@ -170,9 +170,9 @@
             <Label>Webhook URL</Label>
             <div class="flex items-center gap-2">
                 <div class="relative flex-1">
-                    <Input 
-                        :model-value="xenditWebhookUrl" 
-                        readonly 
+                    <Input
+                        :model-value="xenditWebhookUrl"
+                        readonly
                         class="bg-secondary/50 font-mono text-xs pr-10"
                     />
                 </div>

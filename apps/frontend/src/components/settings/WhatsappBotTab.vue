@@ -3,7 +3,7 @@
         <!-- Enable/Disable WhatsApp Integration -->
         <div class="relative overflow-hidden p-6 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 shadow-sm group">
             <div class="absolute top-0 right-0 -m-4 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all duration-700"></div>
-            
+
             <div class="relative flex items-center justify-between">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary shadow-inner">
@@ -15,20 +15,20 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
-                    <Button 
-                        v-if="form.waEnabled" 
-                        variant="ghost" 
-                        size="icon" 
-                        class="h-9 w-9 rounded-xl hover:bg-primary/10" 
-                        @click="checkStatus" 
+                    <Button
+                        v-if="form.waEnabled"
+                        variant="ghost"
+                        size="icon"
+                        class="h-9 w-9 rounded-xl hover:bg-primary/10"
+                        @click="checkStatus"
                         :disabled="checkingStatus"
                     >
                         <RefreshCcw class="w-4 h-4" :class="{ 'animate-spin': checkingStatus }" />
                     </Button>
-                    <Switch 
-                        :checked="!!form.waEnabled" 
-                        @update:checked="(val) => form.waEnabled = val" 
-                        class="scale-110" 
+                    <Switch
+                        :checked="!!form.waEnabled"
+                        @update:checked="(val) => form.waEnabled = val"
+                        class="scale-110"
                     />
                 </div>
             </div>
@@ -49,56 +49,56 @@
                             <div class="grid gap-4 sm:grid-cols-2">
                                 <div class="space-y-1.5">
                                     <label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">Service URL</label>
-                                    <input 
-                                        v-model="form.waServiceUrl" 
-                                        type="text" 
+                                    <input
+                                        v-model="form.waServiceUrl"
+                                        type="text"
                                         placeholder="http://localhost:3030/api/v1"
-                                        class="w-full bg-background border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary transition-all" 
+                                        class="w-full bg-background border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary transition-all"
                                     />
                                 </div>
                                 <div class="space-y-1.5">
                                     <label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">Instance ID</label>
-                                    <input 
-                                        v-model="form.waInstanceId" 
-                                        type="text" 
-                                        placeholder="main"
-                                        class="w-full bg-background border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary transition-all" 
+                                    <input
+                                        v-model="form.waInstanceId"
+                                        type="text"
+                                        placeholder="Insert Wainthego instance ID"
+                                        class="w-full bg-background border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary transition-all"
                                     />
                                 </div>
                             </div>
                             <div class="grid gap-4 sm:grid-cols-2">
                                 <div class="space-y-1.5">
                                     <label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">API Key (Master)</label>
-                                    <input 
-                                        v-model="form.waApiKey" 
-                                        type="password" 
+                                    <input
+                                        v-model="form.waApiKey"
+                                        type="password"
                                         placeholder="Wainthego API Key"
-                                        class="w-full bg-background border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary transition-all" 
+                                        class="w-full bg-background border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary transition-all"
                                     />
                                 </div>
                                 <div class="space-y-1.5">
                                     <label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">Webhook Secret (Verification)</label>
-                                    <input 
-                                        v-model="form.waWebhookSecret" 
-                                        type="password" 
+                                    <input
+                                        v-model="form.waWebhookSecret"
+                                        type="password"
                                         placeholder="Webhook Secret (Optional)"
-                                        class="w-full bg-background border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary transition-all" 
+                                        class="w-full bg-background border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary transition-all"
                                     />
                                 </div>
                             </div>
-                            
+
                             <div class="space-y-1.5">
                                 <label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">Webhook URL (Copy to Wainthego)</label>
                                 <div class="relative">
-                                    <input 
-                                        :value="webhookUrl" 
-                                        type="text" 
+                                    <input
+                                        :value="webhookUrl"
+                                        type="text"
                                         readOnly
-                                        class="w-full bg-secondary/30 border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary transition-all font-mono" 
+                                        class="w-full bg-secondary/30 border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary transition-all font-mono"
                                     />
-                                    <Button 
-                                        variant="ghost" 
-                                        size="sm" 
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
                                         class="absolute right-1 top-1 h-8 px-2 text-[10px] font-bold text-primary hover:bg-primary/10"
                                         @click="copyWebhook"
                                     >
@@ -106,7 +106,7 @@
                                     </Button>
                                 </div>
                             </div>
-                            
+
                             <div class="flex items-center gap-2 p-3 bg-blue-500/5 rounded-xl border border-blue-500/20 text-[10px] text-blue-600 dark:text-blue-400">
                                 <Info class="w-3.5 h-3.5 shrink-0" />
                                 <p>Configure these settings, then click <b>Save Changes</b> at the bottom. Scan QR code in the Wainthego dashboard.</p>
@@ -124,8 +124,8 @@
                         </div>
                         <div class="flex items-center gap-2">
                              <div class="flex items-center bg-secondary/20 p-0.5 rounded-lg border border-border/50">
-                                <button 
-                                    v-for="filter in logFilters" 
+                                <button
+                                    v-for="filter in logFilters"
                                     :key="filter.value"
                                     @click="activeFilter = filter.value"
                                     class="px-2.5 py-1 text-[9px] font-bold rounded-md transition-all"
@@ -134,9 +134,9 @@
                                     {{ filter.label }}
                                 </button>
                             </div>
-                            <Button 
-                                variant="ghost" 
-                                size="sm" 
+                            <Button
+                                variant="ghost"
+                                size="sm"
                                 class="h-7 text-[10px] gap-1.5 text-muted-foreground hover:text-primary"
                                 @click="fetchLogs"
                                 :disabled="loadingLogs"
@@ -153,7 +153,7 @@
                                 <div class="flex items-start justify-between gap-4">
                                     <div class="space-y-1 min-w-0">
                                         <div class="flex items-center gap-2">
-                                            <span 
+                                            <span
                                                 class="text-[9px] font-bold px-1.5 py-0.5 rounded-md"
                                                 :class="log.type === 'INCOMING' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'"
                                             >
@@ -198,13 +198,14 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { MessageCircle, Info, RefreshCcw } from 'lucide-vue-next'
+import type { UpdateSettingsDTO } from '@/types'
+import { whatsappApi } from '@/api'
+import { useWhatsappStore } from '@/stores/whatsapp'
 
 import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
 import Switch from '@/components/ui/Switch.vue'
 import Button from '@/components/ui/Button.vue'
-import type { UpdateSettingsDTO } from '@/types'
-import { whatsappApi } from '@/api'
 
 import { useToast } from '@/composables/useToast'
 
@@ -214,14 +215,16 @@ const props = defineProps<{
 
 const { toast } = useToast()
 const api = whatsappApi()
+const whatsappStore = useWhatsappStore()
 
-const connectionStatus = ref<'CONNECTED' | 'DISCONNECTED'>('DISCONNECTED')
 const connectedUser = ref('')
-const checkingStatus = ref(false)
-const copied = ref(false)
 const messageLogs = ref<any[]>([])
 const loadingLogs = ref(false)
 const activeFilter = ref<'ALL' | 'INCOMING' | 'OUTGOING'>('ALL')
+const copied = ref(false)
+
+const connectionStatus = computed(() => whatsappStore.connectionStatus)
+const checkingStatus = computed(() => whatsappStore.isFetching)
 
 const logFilters = [
     { label: 'ALL', value: 'ALL' },
@@ -279,18 +282,13 @@ const fetchLogs = async () => {
 }
 
 const checkStatus = async () => {
-    checkingStatus.value = true
     try {
-        const res = await api.getStatus() as any
-        connectionStatus.value = res.status || 'DISCONNECTED'
-        if (res.status === 'CONNECTED' && res.user) {
+        const res = await whatsappStore.fetchStatus()
+        if (res && res.status === 'CONNECTED' && res.user) {
             connectedUser.value = res.user.name || res.user.id || 'Connected'
         }
     } catch (e) {
         console.error('Failed to check status', e)
-        connectionStatus.value = 'DISCONNECTED'
-    } finally {
-        checkingStatus.value = false
     }
 }
 

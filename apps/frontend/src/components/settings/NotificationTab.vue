@@ -3,21 +3,21 @@
         <!-- Main Status: Glassmorphism Action Header -->
         <div class="relative overflow-hidden p-6 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 shadow-sm group">
             <div class="absolute top-0 right-0 -m-4 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all duration-700"></div>
-            
+
             <div class="relative flex items-center justify-between">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary shadow-inner">
                         <BellRing class="w-7 h-7" />
                     </div>
                     <div>
-                        <h4 class="font-bold text-base tracking-tight">Status Notifikasi Global</h4>
+                        <h4 class="font-bold text-base tracking-tight">Global Notification</h4>
                         <p class="text-xs text-muted-foreground mt-0.5">Kontrol pengiriman pesan WhatsApp otomatis ke pelanggan.</p>
                     </div>
                 </div>
-                <Switch 
-                    :checked="!!form.waEnabled" 
-                    @update:checked="(val: boolean) => form.waEnabled = val" 
-                    class="scale-110" 
+                <Switch
+                    :checked="!!form.waEnabled"
+                    @update:checked="(val: boolean) => form.waEnabled = val"
+                    class="scale-110"
                 />
             </div>
         </div>
@@ -41,15 +41,15 @@
                                             <Receipt class="w-4 h-4" />
                                         </div>
                                         <div>
-                                            <span class="text-sm font-semibold">Notifikasi Tagihan Baru</span>
+                                            <span class="text-sm font-semibold">New Bill Notification</span>
                                             <div v-if="form.autoNotifyNewBill" class="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5">
                                                 <Clock class="w-3 h-3" /> Dikirim pukul {{ form.autoBillTime }}
                                             </div>
                                         </div>
                                     </div>
-                                    <Switch 
-                                        :checked="!!form.autoNotifyNewBill" 
-                                        @update:checked="(val: boolean) => form.autoNotifyNewBill = val" 
+                                    <Switch
+                                        :checked="!!form.autoNotifyNewBill"
+                                        @update:checked="(val: boolean) => form.autoNotifyNewBill = val"
                                     />
                                 </div>
 
@@ -65,14 +65,14 @@
                                                 <p class="text-[11px] font-medium text-muted-foreground">Template Pesan</p>
                                                 <span class="text-[10px] text-muted-foreground italic">Shift+Enter untuk baris baru</span>
                                             </div>
-                                            <textarea 
+                                            <textarea
                                                 v-model="form.billTemplate"
                                                 class="flex min-h-[80px] w-full rounded-xl border border-border bg-background px-4 py-3 text-xs focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-muted-foreground/50"
                                                 placeholder="Tulis template pesan di sini..."
                                             ></textarea>
                                             <div class="flex flex-wrap gap-1.5">
-                                                <code v-for="v in variables" :key="v" 
-                                                    class="text-[9px] px-2 py-1 bg-secondary hover:bg-primary/10 hover:text-primary rounded-lg border border-border/50 cursor-pointer transition-colors" 
+                                                <code v-for="v in variables" :key="v"
+                                                    class="text-[9px] px-2 py-1 bg-secondary hover:bg-primary/10 hover:text-primary rounded-lg border border-border/50 cursor-pointer transition-colors"
                                                     @click="copyVar(v)">{{ v }}</code>
                                             </div>
                                         </div>
@@ -90,13 +90,13 @@
                                             <CheckCircle2 class="w-4 h-4" />
                                         </div>
                                         <div>
-                                            <span class="text-sm font-semibold">Resi Digital Otomatis</span>
+                                            <span class="text-sm font-semibold">Auto Digital Receipt</span>
                                             <p class="text-[10px] text-muted-foreground mt-0.5">Konfirmasi saat pembayaran lunas.</p>
                                         </div>
                                     </div>
-                                    <Switch 
-                                        :checked="!!form.autoNotifyPaymentSuccess" 
-                                        @update:checked="(val: boolean) => form.autoNotifyPaymentSuccess = val" 
+                                    <Switch
+                                        :checked="!!form.autoNotifyPaymentSuccess"
+                                        @update:checked="(val: boolean) => form.autoNotifyPaymentSuccess = val"
                                     />
                                 </div>
 
@@ -105,7 +105,7 @@
                                         <div class="flex items-center justify-between px-0.5">
                                             <p class="text-[11px] font-medium text-muted-foreground">Template Pesan</p>
                                         </div>
-                                        <textarea 
+                                        <textarea
                                             v-model="form.paymentTemplate"
                                             class="flex min-h-[80px] w-full rounded-xl border border-border bg-background px-4 py-3 text-xs focus:ring-1 focus:ring-primary outline-none transition-all"
                                         ></textarea>
@@ -126,15 +126,15 @@
                                             <Clock class="w-4 h-4" />
                                         </div>
                                         <div>
-                                            <span class="text-sm font-semibold">Pengingat Otomatis (Reminder)</span>
+                                            <span class="text-sm font-semibold">Auto Bill Reminder</span>
                                             <div v-if="form.autoReminderEnabled" class="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5">
                                                 Setiap {{ form.globalReminderInterval }} hari sekali pukul {{ form.reminderTime }}
                                             </div>
                                         </div>
                                     </div>
-                                    <Switch 
-                                        :checked="!!form.autoReminderEnabled" 
-                                        @update:checked="(val: boolean) => form.autoReminderEnabled = val" 
+                                    <Switch
+                                        :checked="!!form.autoReminderEnabled"
+                                        @update:checked="(val: boolean) => form.autoReminderEnabled = val"
                                     />
                                 </div>
 
@@ -161,7 +161,7 @@
 
                                         <div class="space-y-2">
                                             <p class="text-[11px] font-medium text-muted-foreground px-0.5">Template Pengingat</p>
-                                            <textarea 
+                                            <textarea
                                                 v-model="form.reminderTemplate"
                                                 class="flex min-h-[80px] w-full rounded-xl border border-border bg-background px-4 py-3 text-xs focus:ring-1 focus:ring-primary outline-none transition-all"
                                             ></textarea>
@@ -190,7 +190,7 @@
                                     <Moon class="w-5 h-5" />
                                 </div>
                                 <div class="space-y-1">
-                                    <h4 class="text-sm font-semibold">Quiet Hours (Jam Istirahat)</h4>
+                                    <h4 class="text-sm font-semibold">Quiet Hours</h4>
                                     <p class="text-[11px] text-muted-foreground leading-relaxed">Pesan otomatis yang dipicu pada rentang waktu ini akan <b>ditahan</b> dan dikirim otomatis saat jam kerja dimulai kembali.</p>
                                 </div>
                             </div>
@@ -215,10 +215,10 @@
                                     <div class="w-2 h-2 rounded-full bg-purple-400"></div>
                                     <span class="text-xs font-medium">Aktifkan Quiet Mode Sepanjang Akhir Pekan</span>
                                 </div>
-                                <Switch 
-                                    :checked="!!form.quietHoursWeekend" 
+                                <Switch
+                                    :checked="!!form.quietHoursWeekend"
                                     @update:checked="(val: boolean) => form.quietHoursWeekend = val"
-                                    @click.stop 
+                                    @click.stop
                                 />
                             </div>
                         </CardContent>
@@ -239,12 +239,12 @@
 </template>
 
 <script setup lang="ts">
-import { 
-    BellRing, 
-    Receipt, 
-    CheckCircle2, 
-    Clock, 
-    Moon, 
+import {
+    BellRing,
+    Receipt,
+    CheckCircle2,
+    Clock,
+    Moon,
     Settings2
 } from 'lucide-vue-next'
 import Card from '@/components/ui/Card.vue'

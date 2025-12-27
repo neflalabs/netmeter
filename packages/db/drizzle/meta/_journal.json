@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1766696690276,
+      "when": 1766795906225,
       "tag": "0000_squashed_initial",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1766705392651,
-      "tag": "0001_milky_human_cannonball",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1766729314015,
-      "tag": "0002_sudden_the_enforcers",
       "breakpoints": true
     }
   ]

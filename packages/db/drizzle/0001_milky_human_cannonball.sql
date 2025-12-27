@@ -1,1 +1,0 @@
-ALTER TABLE `settings` ADD `wa_webhook_secret` text DEFAULT '';
