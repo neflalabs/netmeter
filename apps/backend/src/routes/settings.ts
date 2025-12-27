@@ -32,10 +32,35 @@ app.put('/', zValidator('json', settingsSchema), async (c) => {
 
         const storedSettings = await db.select().from(settings).limit(1);
 
-        const values = {
+        const values: any = {
             ...body,
             updatedAt: new Date(),
         };
+
+        // Announcement Date Logic
+        const prev = storedSettings[0];
+        const now = new Date();
+
+        if (body.announcementActive !== undefined) {
+            const wasActive = prev?.announcementActive;
+            const nowActive = body.announcementActive;
+            const typeChanged = body.announcementType && (body.announcementType !== prev?.announcementType);
+            const contentChanged = (body.announcementTitle !== undefined && body.announcementTitle !== prev?.announcementTitle) ||
+                (body.announcementMessage !== undefined && body.announcementMessage !== prev?.announcementMessage);
+
+            if (nowActive) {
+                // If it was OFF and now ON, or if TYPE changed while ON
+                if (!wasActive || typeChanged) {
+                    values.announcementCreatedAt = now;
+                    values.announcementUpdatedAt = null;
+                }
+                // If it stays ON and CONTENT changed (but type didn't)
+                else if (contentChanged) {
+                    values.announcementUpdatedAt = now;
+                }
+            }
+            // If nowActive is false, we don't change the dates (preserve history as agreed)
+        }
 
         console.log('[Settings] Values to save:', JSON.stringify(values, null, 2));
 

@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router'
-import { CheckCircle2, LogIn, ChevronDown, ChevronUp, LayoutDashboard } from 'lucide-vue-next'
+import { CheckCircle2, ChevronDown, ChevronUp, LayoutDashboard } from 'lucide-vue-next'
 import Button from '@/components/ui/Button.vue'
 import Footer from '@/components/Footer.vue'
 import Header from '@/components/Header.vue'
 import AnnouncementBanner from '@/components/AnnouncementBanner.vue'
+import WelcomeHero from '@/components/WelcomeHero.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import UserAvatarStack from '@/components/UserAvatarStack.vue'
 import AppLogo from '@/components/AppLogo.vue'
@@ -33,6 +34,8 @@ const fetchSettings = async () => {
                 appSettings.value.announcementMessage = data.announcementMessage
                 appSettings.value.announcementType = data.announcementType
                 appSettings.value.announcementActive = data.announcementActive
+                appSettings.value.announcementCreatedAt = data.announcementCreatedAt
+                appSettings.value.announcementUpdatedAt = data.announcementUpdatedAt
             }
         }
     } catch (e) {
@@ -140,11 +143,15 @@ const getPaymentColorClass = (method: string) => {
 
     <section class="container mx-auto px-4 pt-6 max-w-2xl">
         <AnnouncementBanner 
-            :active="appSettings.announcementActive"
+            v-if="appSettings.announcementActive"
+            :active="true"
             :title="appSettings.announcementTitle"
             :message="appSettings.announcementMessage"
             :type="appSettings.announcementType"
+            :created-at="appSettings.announcementCreatedAt"
+            :updated-at="appSettings.announcementUpdatedAt"
         />
+        <WelcomeHero v-else />
     </section>
 
     <!-- Main Content (Timeline) -->

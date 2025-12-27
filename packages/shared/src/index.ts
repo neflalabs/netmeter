@@ -31,6 +31,8 @@ export const settingsSchema = z.object({
     announcementMessage: z.string().optional().nullable(),
     announcementType: z.enum(['INFO', 'WARNING', 'SUCCESS', 'DANGER']).optional().nullable(),
     announcementActive: z.boolean().optional().nullable(),
+    announcementCreatedAt: z.preprocess((val) => (val === '' ? null : val), z.coerce.date().nullable().optional()),
+    announcementUpdatedAt: z.preprocess((val) => (val === '' ? null : val), z.coerce.date().nullable().optional()),
 
 
     billTemplate: z.string().optional().nullable(),

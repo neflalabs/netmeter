@@ -12,6 +12,8 @@ export interface Settings {
     announcementMessage?: string
     announcementType?: 'INFO' | 'WARNING' | 'SUCCESS' | 'DANGER'
     announcementActive?: boolean
+    announcementCreatedAt?: Date | string
+    announcementUpdatedAt?: Date | string
 
     billTemplate?: string
     paymentTemplate?: string
@@ -64,6 +66,8 @@ export interface UpdateSettingsDTO {
     announcementMessage?: string
     announcementType?: 'INFO' | 'WARNING' | 'SUCCESS' | 'DANGER'
     announcementActive?: boolean
+    announcementCreatedAt?: Date | string
+    announcementUpdatedAt?: Date | string
 
 
     billTemplate?: string

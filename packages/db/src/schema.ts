@@ -41,6 +41,8 @@ export const settings = sqliteTable('settings', {
     announcementMessage: text('announcement_message').default(''),
     announcementType: text('announcement_type', { enum: ['INFO', 'WARNING', 'SUCCESS', 'DANGER'] }).default('INFO'),
     announcementActive: integer('announcement_active', { mode: 'boolean' }).default(false),
+    announcementCreatedAt: integer('announcement_created_at', { mode: 'timestamp' }),
+    announcementUpdatedAt: integer('announcement_updated_at', { mode: 'timestamp' }),
 
     billTemplate: text('bill_template').default('Assalamualaikum {name}, patungan bulan {month} / {year} sebesar Rp. {amount} sudah bisa dibayar.{br} Untuk membayar secara otomatis, klik di sini: {link} {br}{br} _Pesan ini dikirim otomatis oleh aplikasi._'),
     paymentTemplate: text('payment_template').default('Assalamualaikum {name}, patungan sebesar Rp. {amount} via {method} sudah diterima. detailnya bisa cek disini : {link} {br} Maturnuwun! {br}{br} _Pesan ini dikirim otomatis oleh aplikasi._'),

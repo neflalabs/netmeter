@@ -122,6 +122,8 @@ app.get('/settings', async (c) => {
             announcementMessage: settings.announcementMessage,
             announcementType: settings.announcementType,
             announcementActive: settings.announcementActive,
+            announcementCreatedAt: settings.announcementCreatedAt,
+            announcementUpdatedAt: settings.announcementUpdatedAt,
 
 
             // Midtrans Public Config

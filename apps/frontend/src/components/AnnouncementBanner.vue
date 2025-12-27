@@ -15,7 +15,11 @@
                     {{ title || 'Pengumuman' }}
                     <span class="animate-shiny-extra">✨</span>
                 </h3>
-                <p class="text-xs opacity-75" :class="variants[type].textColor">{{ formattedDate }}</p>
+                <Transition name="fade-date" mode="out-in">
+                    <p :key="formattedDate" class="text-xs opacity-75 h-4" :class="variants[type].textColor">
+                        {{ formattedDate }}
+                    </p>
+                </Transition>
             </div>
         </div>
     </div>
@@ -33,20 +37,73 @@
 
 <script setup lang="ts">
 import { Info, AlertTriangle, CheckCircle2, AlertOctagon } from 'lucide-vue-next'
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { useTimeAgo } from '@vueuse/core'
 
 const props = defineProps<{
     title?: string
     message?: string
     type?: 'INFO' | 'WARNING' | 'SUCCESS' | 'DANGER'
     active?: boolean
+    createdAt?: string | Date
+    updatedAt?: string | Date
 }>()
 
 const type = computed(() => props.type || 'INFO')
 
+// Dynamic Date Logic
+const showRelative = ref(false)
+const interval = ref<any>(null)
+
+onMounted(() => {
+    interval.value = setInterval(() => {
+        showRelative.value = !showRelative.value
+    }, 7000)
+})
+
+onUnmounted(() => {
+    if (interval.value) clearInterval(interval.value)
+})
+
+const rawDate = computed(() => props.updatedAt || props.createdAt)
+const timeAgo = useTimeAgo(computed(() => rawDate.value ? new Date(rawDate.value) : new Date()))
+
 const formattedDate = computed(() => {
-    const now = new Date()
-    return now.toLocaleDateString('id-ID', { 
+    // If no date is saved yet, fallback to today's date logic
+    const date = rawDate.value ? new Date(rawDate.value) : new Date()
+    const isUpdate = !!props.updatedAt && !!rawDate.value
+
+    if (showRelative.value) {
+        // Simple Indonesian translation for useTimeAgo output if it's default english
+        // Or we can just use the raw value if it's already localized (unlikely by default)
+        let agoText = timeAgo.value
+        
+        // Basic mapping for common English outputs if needed, or just keep it simple.
+        // For a high quality result, let's try to make it feel Indonesian.
+        agoText = agoText
+            .replace('just now', 'baru saja')
+            .replace(' ago', ' lalu')
+            .replace('yesterday', 'kemarin')
+            .replace('last month', 'bulan lalu')
+            .replace('last year', 'tahun lalu')
+            .replace('minutes', 'menit')
+            .replace('minute', 'menit')
+            .replace('hours', 'jam')
+            .replace('hour', 'jam')
+            .replace('days', 'hari')
+            .replace('day', 'hari')
+            .replace('weeks', 'minggu')
+            .replace('week', 'minggu')
+            .replace('months', 'bulan')
+            .replace('month', 'bulan')
+            .replace('years', 'tahun')
+            .replace('year', 'tahun')
+
+        return `${isUpdate ? 'Diperbarui' : 'Dibuat'} ${agoText}`
+    }
+
+    // Absolute Format: Indonesian
+    return date.toLocaleDateString('id-ID', { 
         weekday: 'long', 
         year: 'numeric', 
         month: 'long', 
@@ -194,5 +251,17 @@ const icons = {
     top: 0;
     right: -18px;
     animation: particle-idle 5s ease-in-out infinite 2.5s;
+}
+
+/* Fade Transition for Date */
+.fade-date-enter-active,
+.fade-date-leave-active {
+  transition: all 0.5s ease;
+}
+
+.fade-date-enter-from,
+.fade-date-leave-to {
+  opacity: 0;
+  transform: translateY(4px);
 }
 </style>

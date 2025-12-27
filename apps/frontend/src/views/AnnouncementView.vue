@@ -18,6 +18,8 @@
                     :title="form.announcementTitle || 'Pengumuman'"
                     :message="form.announcementMessage || 'Isi pengumuman akan muncul di sini...'"
                     :type="form.announcementType"
+                    :created-at="form.announcementCreatedAt"
+                    :updated-at="form.announcementUpdatedAt"
                 />
             </CardContent>
         </Card>
