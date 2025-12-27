@@ -28,15 +28,33 @@
     <div class="px-5 py-4" :class="variants[type].body">
         <div 
             class="text-sm leading-relaxed text-justify prose prose-sm max-w-none prose-strong:text-current prose-p:text-current prose-headings:text-current prose-li:text-current prose-a:text-current prose-a:underline hover:prose-a:opacity-80 transition-opacity" 
-            :class="variants[type].textColor"
+            :class="[
+                variants[type].textColor,
+                { 'line-clamp-3': !isExpanded && isLongContent }
+            ]"
             v-html="message"
         ></div>
+        
+        <!-- Toggle Button -->
+        <div v-if="isLongContent" class="mt-2 text-right">
+            <button 
+                @click="isExpanded = !isExpanded" 
+                class="text-xs font-semibold underline hover:opacity-80 focus:outline-none transition-colors flex items-center gap-1 ml-auto"
+                :class="variants[type].iconColor"
+            >
+                {{ isExpanded ? 'Sembunyikan' : 'Selengkapnya...' }}
+                <ChevronDown 
+                    class="w-3 h-3 transition-transform duration-300" 
+                    :class="{ 'rotate-180': isExpanded }"
+                />
+            </button>
+        </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Info, AlertTriangle, CheckCircle2, AlertOctagon } from 'lucide-vue-next'
+import { Info, AlertTriangle, CheckCircle2, AlertOctagon, ChevronDown } from 'lucide-vue-next'
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useTimeAgo } from '@vueuse/core'
 
@@ -50,6 +68,14 @@ const props = defineProps<{
 }>()
 
 const type = computed(() => props.type || 'INFO')
+
+// Truncation Logic
+const isExpanded = ref(false)
+const isLongContent = computed(() => {
+    // Simple check: if stripping HTML tags results in > 200 chars
+    const text = props.message?.replace(/<[^>]*>?/gm, '') || ''
+    return text.length > 200
+})
 
 // Dynamic Date Logic
 const showRelative = ref(false)
