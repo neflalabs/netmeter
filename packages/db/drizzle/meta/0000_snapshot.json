@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "5761600d-819d-44fa-a515-aeb1ced0bdcf",
+  "id": "594ebddf-6475-41b2-bf10-8904609f8bf3",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "bills": {
@@ -403,13 +403,27 @@
           "autoincrement": false,
           "default": false
         },
+        "announcement_created_at": {
+          "name": "announcement_created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "announcement_updated_at": {
+          "name": "announcement_updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "bill_template": {
           "name": "bill_template",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'Assalamualaikum {name}, patungan bulan {month} / {year} sebesar Rp. {amount} sudah bisa dibayar.{br} Untuk membayar secara otomatis, klik di sini: {link} {br}{br} Pesan ini dikirim otomatis oleh aplikasi.'"
+          "default": "'Assalamualaikum {name}, patungan bulan {month} / {year} sebesar Rp. {amount} sudah bisa dibayar.{br} Untuk membayar secara otomatis, klik di sini: {link} {br}{br} _Pesan ini dikirim otomatis oleh aplikasi._'"
         },
         "payment_template": {
           "name": "payment_template",
@@ -417,7 +431,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'Assalamualaikum {name}, patungan sebesar Rp. {amount} via {method} sudah diterima. detailnya bisa cek disini : {link} {br} Maturnuwun! {br}{br} Pesan ini dikirim otomatis oleh aplikasi.'"
+          "default": "'Assalamualaikum {name}, patungan sebesar Rp. {amount} via {method} sudah diterima. detailnya bisa cek disini : {link} {br} Maturnuwun! {br}{br} _Pesan ini dikirim otomatis oleh aplikasi._'"
         },
         "reminder_template": {
           "name": "reminder_template",
@@ -425,7 +439,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'Assalamualaikum {name}, sekadar mengingatkan patungan WiFi bulan {month} / {year} sebesar Rp. {amount} belum lunas. Jika sudah bayar, abaikan pesan ini: {link} {br}{br} Pesan ini dikirim otomatis oleh aplikasi.'"
+          "default": "'Assalamualaikum {name}, sekadar mengingatkan patungan WiFi bulan {month} / {year} sebesar Rp. {amount} belum lunas. Jika sudah bayar, abaikan pesan ini: {link} {br}{br} _Pesan ini dikirim otomatis oleh aplikasi._'"
         },
         "global_due_day": {
           "name": "global_due_day",
@@ -473,7 +487,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'main'"
+          "default": "''"
         },
         "wa_webhook_secret": {
           "name": "wa_webhook_secret",
@@ -569,7 +583,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'Tidak ingin menggunakan pembayaran otomatis? Silakan lakukan pembayaran tunai dengan menghubungi admin.'"
+          "default": "'Pembayaran Tunai masih selalu diterima selama menghubungi admin.'"
         },
         "qris_raw_string": {
           "name": "qris_raw_string",

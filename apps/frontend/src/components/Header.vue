@@ -15,10 +15,15 @@ const props = defineProps<{
 const router = useRouter()
 
 const handleBack = () => {
-    if (props.backTo) {
+    // If we have history, go back
+    if (window.history.length > 1) {
+        router.back()
+    } else if (props.backTo) {
+        // Fallback to explicit prop if no history
         router.push(props.backTo)
     } else {
-        router.back()
+        // Absolute fallback
+        router.push('/')
     }
 }
 </script>
@@ -31,7 +36,7 @@ const handleBack = () => {
                     v-if="showBack" 
                     variant="ghost" 
                     size="icon" 
-                    class="-ml-2" 
+                    class="-ml-2 md:hidden" 
                     @click="handleBack"
                 >
                     <ArrowLeft class="w-5 h-5" />

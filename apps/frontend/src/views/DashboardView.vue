@@ -9,17 +9,43 @@ import CardTitle from '@/components/ui/CardTitle.vue'
 import CardContent from '@/components/ui/CardContent.vue'
 import Footer from '@/components/Footer.vue'
 import Header from '@/components/Header.vue'
+import AdminSidebar from '@/components/AdminSidebar.vue'
 import StatsCard from '@/components/StatsCard.vue'
 import { billsApi } from '@/api'
 import { useBillStore } from '@/stores/bill'
 import { useUserStore } from '@/stores/user'
 import { useAuthStore } from '@/stores/auth'
+import { useReportStore } from '@/stores/report'
 import { useToast } from '@/composables/useToast'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js'
+import { Bar } from 'vue-chartjs'
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+)
 
 const { toast } = useToast()
 const auth = useAuthStore()
 const billStore = useBillStore()
 const userStore = useUserStore()
+const reportStore = useReportStore()
 const router = useRouter()
 
 const handleLogout = () => {
@@ -31,6 +57,7 @@ const handleLogout = () => {
 const isLoading = computed(() => billStore.isFetching || userStore.isFetching)
 const activeBillId = ref<number | null>(null)
 const sendingNotif = ref(false)
+const lastTransactionId = ref<number | null>(null)
 
 const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('id-ID').format(value)
@@ -95,12 +122,89 @@ onMounted(async () => {
     // Initial fetch
     billStore.fetchBills()
     userStore.fetchUsers()
+    
+    // Fetch financial stats for current month
+    const now = new Date()
+    const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
+    reportStore.fetchFinancial(start, end)
 
-    // Polling every 10 seconds for real-time reactivity
-    refreshInterval = setInterval(() => {
-        billStore.fetchBills(true) // Force background refresh
-    }, 10000)
+    reportStore.fetchFinancial(start, end)
+    
+    // Initial fetch of latest transaction to set baseline (don't notify for past)
+    try {
+        const res = await reportStore.fetchLatestTransaction()
+        if (res && res.transaction) {
+            lastTransactionId.value = res.transaction.id
+        }
+    } catch (e) {
+        console.error('Failed to fetch initial transaction', e)
+    }
+
+    // Polling interval (15s)
+    refreshInterval = setInterval(async () => {
+        // 1. Refresh bills list in background
+        billStore.fetchBills(true)
+
+        // 2. Poll for new payments
+        try {
+            const res = await reportStore.fetchLatestTransaction()
+            if (res && res.transaction) {
+                const tx = res.transaction
+                // Check if we have a NEW transaction
+                if (lastTransactionId.value !== null && tx.id !== lastTransactionId.value) {
+                    // Update baseline
+                    lastTransactionId.value = tx.id
+                    
+                    // Trigger Notification
+                    toast({
+                        title: 'Pembayaran Baru!',
+                        description: `Rp ${formatCurrency(tx.amount)} dari ${tx.user} (${tx.method})`,
+                        variant: 'success',
+                        duration: 5000
+                    })
+
+                    // Refresh Dashboard Stats
+                    reportStore.fetchFinancial(start, end)
+                } else if (lastTransactionId.value === null) {
+                    // Just set the value if it was null (app just loaded/first poll)
+                    lastTransactionId.value = tx.id
+                }
+            }
+        } catch (e) {
+            console.error('Polling error', e)
+        }
+    }, 15000)
 })
+
+// Chart Logic
+const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+        y: {
+            beginAtZero: true,
+            grid: { color: isDark ? '#333' : '#e5e7eb' },
+            ticks: { color: isDark ? '#9ca3af' : '#4b5563', font: { size: 10 } }
+        },
+        x: {
+            grid: { display: false },
+            ticks: { color: isDark ? '#9ca3af' : '#4b5563', font: { size: 10 } }
+        }
+    }
+}
+
+const financialChartData = computed(() => ({
+    labels: reportStore.financialData.chart.map((d: any) => new Date(d.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })),
+    datasets: [{
+        label: 'Pemasukan Harian',
+        backgroundColor: '#3b82f6',
+        borderRadius: 4,
+        data: reportStore.financialData.chart.map((d: any) => d.amount)
+    }]
+}))
 
 // Cleanup interval on unmount
 import { onUnmounted } from 'vue'
@@ -110,62 +214,121 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-background pb-20">
-    <!-- Header -->
-    <Header 
-        title="Admin Dashboard" 
-        subtitle="Kelola Netmeter"
-        :show-back="true"
-        back-to="/"
-    >
-        <template #actions>
-             <Button size="icon" variant="ghost" class="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" @click="handleLogout" title="Logout">
-                <LogOut class="w-5 h-5" />
-            </Button>
-        </template>
-    </Header>
+  <div class="min-h-screen bg-background pb-20 md:pb-6 flex">
+    <!-- Desktop Sidebar -->
+    <AdminSidebar />
 
-    <main class="container mx-auto px-4 py-6 max-w-2xl space-y-6">
-        <!-- Quick Stats -->
-        <div class="grid grid-cols-2 gap-4">
-            <StatsCard 
-                title="Total User Active" 
-                :value="userStore.users.length" 
-                :icon="Users" 
-                variant="primary"
-            />
-            <StatsCard 
-                title="Pending Income" 
-                :value="`Rp ${formatCurrency(estimatedIncome)}`"
-                :icon="CreditCard" 
-                variant="secondary"
-            />
-        </div>
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col md:ml-64 transition-all duration-300 min-w-0 overflow-x-hidden">
+        <Header 
+            title="Admin Dashboard" 
+            subtitle="Kelola Netmeter"
+            :show-back="true"
+            back-to="/"
+        >
+            <template #actions>
+                 <Button size="icon" variant="ghost" class="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 md:hidden" @click="handleLogout" title="Logout">
+                    <LogOut class="w-5 h-5" />
+                </Button>
+            </template>
+        </Header>
 
-        <!-- Action Bar -->
-        <div class="flex gap-2 overflow-x-auto pb-2">
-            <Button size="sm" class="pl-2" @click="$router.push('/bills')">
-                <Plus class="w-4 h-4 mr-1" />Tagihan
-            </Button>
-            <Button size="sm" variant="outline" class="pl-2" @click="$router.push('/users')">
-                <Users class="w-4 h-4 mr-1" /> Pengguna
-            </Button>
+        <main class="container mx-auto px-4 py-6 md:max-w-6xl space-y-6 w-full">
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatsCard 
+                    title="User Aktif" 
+                    :value="userStore.users.length" 
+                    :icon="Users" 
+                    variant="primary"
+                />
+                <StatsCard 
+                    title="Estimated" 
+                    :value="`Rp ${formatCurrency(estimatedIncome)}`"
+                    :icon="CreditCard" 
+                    variant="secondary"
+                />
+                <StatsCard 
+                    title="Pemasukan" 
+                    :value="`Rp ${formatCurrency(reportStore.financialData.summary.totalIncome)}`"
+                    :icon="TrendingUp" 
+                    variant="success"
+                />
+                <StatsCard 
+                    title="Metode Top" 
+                    :value="reportStore.financialData.summary.topMethod || '-'" 
+                    :icon="CreditCard" 
+                    variant="warning"
+                />
+            </div>
 
-            <Button size="sm" variant="outline" class="pl-2" @click="$router.push('/stats')">
-                <TrendingUp class="w-4 h-4 mr-1" /> Stats
-            </Button>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Chart Section -->
+                <Card class="lg:col-span-2">
+                    <CardHeader class="pb-2">
+                        <CardTitle class="text-sm font-bold flex items-center gap-2">
+                            <TrendingUp class="w-4 h-4 text-primary" />
+                            Tren Pemasukan (Bulan Ini)
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent class="h-64">
+                         <Bar :data="financialChartData" :options="chartOptions" />
+                    </CardContent>
+                </Card>
 
-            <Button size="sm" variant="outline" class="pl-2" @click="$router.push('/announcement')">
-                <Megaphone class="w-4 h-4 mr-1" /> Pengumuman
-            </Button>
+                <!-- Summary/Quick Actions Section -->
+                <div class="space-y-6">
+                    <Card>
+                        <CardHeader class="pb-2">
+                            <CardTitle class="text-sm font-bold">Ringkasan Invoice</CardTitle>
+                        </CardHeader>
+                        <CardContent class="space-y-4">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-muted-foreground">Sudah Lunas</span>
+                                <span class="font-bold text-green-500">{{ paidBills.length }} User</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-muted-foreground">Belum Lunas</span>
+                                <span class="font-bold text-yellow-500">{{ pendingBills.length }} User</span>
+                            </div>
+                            <div class="pt-2 border-t border-border flex items-center justify-between">
+                                <span class="text-sm font-medium">Progress Iuran</span>
+                                <span class="text-xs font-bold text-primary">{{ Math.round((paidBills.length / (userStore.users.length || 1)) * 100) }}%</span>
+                            </div>
+                            <div class="w-full bg-secondary h-2 rounded-full overflow-hidden">
+                                <div class="bg-primary h-full transition-all duration-500" :style="{ width: `${(paidBills.length / (userStore.users.length || 1)) * 100}%` }"></div>
+                            </div>
+                        </CardContent>
+                    </Card>
 
-            <Button size="sm" variant="outline" class="pl-2" @click="$router.push('/settings')">
-                <Settings class="w-4 h-4 mr-1" /> Settings
-            </Button>
-        </div>
+                    <!-- Latest System Messages/Announcements if any? Or just some quick tips -->
+                </div>
+            </div>
 
-        <!-- Bills List -->
-        <Card>
+            <!-- Action Bar (Mobile Only) -->
+            <div class="flex gap-2 overflow-x-auto pb-2 md:hidden">
+                <Button size="sm" class="pl-2" @click="$router.push('/bills')">
+                    <Plus class="w-4 h-4 mr-1" />Tagihan
+                </Button>
+                <Button size="sm" variant="outline" class="pl-2" @click="$router.push('/users')">
+                    <Users class="w-4 h-4 mr-1" /> Pengguna
+                </Button>
+
+                <Button size="sm" variant="outline" class="pl-2" @click="$router.push('/stats')">
+                    <TrendingUp class="w-4 h-4 mr-1" /> Stats
+                </Button>
+
+                <Button size="sm" variant="outline" class="pl-2" @click="$router.push('/announcement')">
+                    <Megaphone class="w-4 h-4 mr-1" /> Pengumuman
+                </Button>
+
+                <Button size="sm" variant="outline" class="pl-2" @click="$router.push('/settings')">
+                    <Settings class="w-4 h-4 mr-1" /> Settings
+                </Button>
+            </div>
+
+            <!-- Bills List -->
+            <Card class="md:max-w-3xl">
             <CardHeader class="pb-3 px-4 pt-4 border-b border-border">
                 <div class="flex items-center justify-between">
                     <CardTitle class="text-base flex items-center gap-2">
@@ -267,6 +430,7 @@ onUnmounted(() => {
         </Card>
     </main>
 
-    <Footer />
+        <Footer />
+    </div>
   </div>
 </template>

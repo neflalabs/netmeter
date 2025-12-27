@@ -71,7 +71,7 @@ export const settings = sqliteTable('settings', {
     // Payment Methods Configuration
     manualPaymentEnabled: integer('manual_payment_enabled', { mode: 'boolean' }).default(true),
     qrisPaymentEnabled: integer('qris_payment_enabled', { mode: 'boolean' }).default(false),
-    manualPaymentDetails: text('manual_payment_details').default('Tidak ingin menggunakan pembayaran otomatis? Silakan lakukan pembayaran tunai dengan menghubungi admin.'), // Bank details etc.
+    manualPaymentDetails: text('manual_payment_details').default('Pembayaran Tunai masih selalu diterima selama menghubungi admin.'), // Bank details etc.
     qrisRawString: text('qris_raw_string').default('00020101021126610014COM.GO-JEK.WWW01189360091439280284540210G9280284540303UMI51440014ID.CO.QRIS.WWW0215ID10253777680290303UMI5204553353033605802ID5910NEFLA LABS6006SORONG61059844562070703A0163044598'), // Raw QRIS string for dynamic injection
 
     // Midtrans Configuration

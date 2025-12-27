@@ -41,12 +41,17 @@ export const useReportStore = defineStore('report', () => {
         }
     }
 
+    async function fetchLatestTransaction() {
+        return await api.getLatestTransaction()
+    }
+
     return {
         financialData,
         behaviorData,
         isFetchingFinancial,
         isFetchingBehavior,
         fetchFinancial,
-        fetchBehavior
+        fetchBehavior,
+        fetchLatestTransaction
     }
 })

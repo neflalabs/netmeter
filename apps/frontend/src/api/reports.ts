@@ -12,8 +12,13 @@ export const reportsApi = () => {
         return api.get<any>('/api/reports/payment-dates')
     }
 
+    const getLatestTransaction = async () => {
+        return api.get<any>('/api/reports/latest-transaction')
+    }
+
     return {
         getFinancial,
-        getPaymentDates
+        getPaymentDates,
+        getLatestTransaction
     }
 }

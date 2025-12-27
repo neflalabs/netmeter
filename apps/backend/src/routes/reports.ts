@@ -112,6 +112,23 @@ app.get('/financial', zValidator('query', financialReportSchema), async (c) => {
             }
         });
 
+        // Format topMethod for display
+        const formatMethod = (m: string) => {
+            const up = m.toUpperCase();
+            if (up === 'CASH' || up === 'MANUAL_TRANSFER') return 'Tunai';
+            if (up === 'QRIS' || up === 'STATIC_QRIS') return 'Static Qris';
+            if (up === 'MIDTRANS') return 'Midtrans (Issuers)';
+            return m;
+        };
+
+        topMethod = formatMethod(topMethod);
+
+        // Format transactions list
+        const formattedTransactions = paymentData.slice(0, 50).map(tx => ({
+            ...tx,
+            method: formatMethod(tx.method || '')
+        }));
+
         return c.json({
             summary: {
                 totalIncome,
@@ -121,7 +138,7 @@ app.get('/financial', zValidator('query', financialReportSchema), async (c) => {
                 topMethodCount
             },
             chart: dailyChartData,
-            transactions: paymentData.slice(0, 50) // Limit to 50 recent
+            transactions: formattedTransactions
         });
 
     } catch (e: any) {
@@ -170,6 +187,47 @@ app.get('/payment-dates', async (c) => {
 
     } catch (e: any) {
         console.error('Error in /payment-dates', e);
+        return c.json({ error: e.message }, 500);
+    }
+});
+
+// GET /latest-transaction - Polling endpoint for real-time notifications
+app.get('/latest-transaction', async (c) => {
+    try {
+        const latest = await db.select({
+            id: payments.id,
+            amount: payments.amount,
+            user: users.name,
+            method: payments.method,
+            paidAt: payments.paidAt
+        })
+            .from(payments)
+            .innerJoin(bills, eq(payments.billId, bills.id))
+            .innerJoin(users, eq(bills.userId, users.id))
+            .where(eq(payments.status, 'VERIFIED'))
+            .orderBy(desc(payments.paidAt), desc(payments.id))
+            .limit(1);
+
+        if (latest.length === 0) {
+            return c.json({ transaction: null });
+        }
+
+        const tx = latest[0];
+
+        // Inline formatter for consistency
+        let methodDisplay = tx.method || '';
+        const m = methodDisplay.toUpperCase();
+        if (m === 'CASH' || m === 'MANUAL_TRANSFER') methodDisplay = 'Tunai';
+        else if (m === 'QRIS' || m === 'STATIC_QRIS') methodDisplay = 'Static Qris';
+        else if (m === 'MIDTRANS') methodDisplay = 'Midtrans (Issuers)';
+
+        return c.json({
+            transaction: {
+                ...tx,
+                method: methodDisplay
+            }
+        });
+    } catch (e: any) {
         return c.json({ error: e.message }, 500);
     }
 });
