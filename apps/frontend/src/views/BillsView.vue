@@ -6,7 +6,13 @@ import CardHeader from '@/components/ui/CardHeader.vue'
 import CardContent from '@/components/ui/CardContent.vue'
 import StatsCard from '@/components/StatsCard.vue'
 import Button from '@/components/ui/Button.vue'
+import Badge from '@/components/ui/Badge.vue'
+import DropdownMenu from '@/components/ui/DropdownMenu.vue'
+import DropdownMenuTrigger from '@/components/ui/DropdownMenuTrigger.vue'
+import DropdownMenuContent from '@/components/ui/DropdownMenuContent.vue'
+import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue'
 import Header from '@/components/Header.vue'
+import Input from '@/components/ui/Input.vue'
 import AdminSidebar from '@/components/AdminSidebar.vue'
 import Footer from '@/components/Footer.vue'
 import PaymentDialog from '@/components/ui/PaymentDialog.vue'
@@ -28,7 +34,6 @@ const settingsStore = useSettingsStore()
 
 const loading = computed(() => billStore.isFetching)
 const isGenerating = ref(false)
-const activeBillId = ref<number | null>(null)
 const searchQuery = ref('')
 const filterStatus = ref<'ALL' | 'UNPAID' | 'PAID' > ('ALL')
 const isPaymentDialogOpen = ref(false)
@@ -94,7 +99,6 @@ const generateBills = async () => {
 
 const openPaymentDialog = (billId: number) => {
     selectedBillId.value = billId
-    activeBillId.value = null // Close dropdown
     isPaymentDialogOpen.value = true
 }
 
@@ -138,7 +142,7 @@ const handleResetPayment = async (id: number) => {
     } catch (error: any) {
         console.error(error)
     } finally {
-        activeBillId.value = null
+        // Dropdown closes automatically
     }
 }
 
@@ -239,11 +243,11 @@ onMounted(() => {
                 <CardHeader class="pb-3 px-4 pt-4 border-b border-border">
                     <div class="flex items-center gap-2">
                         <Search class="w-4 h-4 text-muted-foreground" />
-                        <input 
+                        <Input 
                             v-model="searchQuery"
                             type="text" 
                             placeholder="Cari tagihan..." 
-                            class="flex-1 text-sm bg-transparent outline-none placeholder:text-muted-foreground text-foreground"
+                            class="flex-1 text-sm bg-transparent border-none focus-visible:ring-0"
                         />
                     </div>
                 </CardHeader>
@@ -277,47 +281,38 @@ onMounted(() => {
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span 
-                                    class="text-[10px] font-bold px-2 py-0.5 rounded-full border"
+                                <Badge 
+                                    variant="outline"
                                     :class="bill.status === 'PAID' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-900/50' : 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-900/50'"
                                 >
                                     {{ bill.status === 'PAID' ? 'LUNAS' : 'PENDING' }}
-                                </span>
-                                <div class="relative">
-                                    <Button variant="ghost" size="icon" class="h-8 w-8 text-muted-foreground" @click="activeBillId = activeBillId === bill.id ? null : bill.id">
-                                        <MoreHorizontal class="w-4 h-4" />
-                                    </Button>
-                                    <!-- Action Menu Dropdown -->
-                                    <div 
-                                        v-if="activeBillId === bill.id" 
-                                        class="absolute right-0 top-full mt-1 w-48 bg-card rounded-lg shadow-lg border border-border z-10 py-1"
-                                    >
-                                        <button 
+                                </Badge>
+                                
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger as-child>
+                                        <Button variant="ghost" size="icon" class="h-8 w-8 text-muted-foreground">
+                                            <MoreHorizontal class="w-4 h-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" class="w-48">
+                                        <DropdownMenuItem 
                                             v-if="bill.status === 'UNPAID'"
                                             @click="openPaymentDialog(bill.id)"
-                                            class="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-secondary/50 flex items-center gap-2"
+                                            class="gap-2"
                                         >
                                             <CheckCircle2 class="w-4 h-4 text-green-600" />
                                             Tandai Lunas
-                                        </button>
-                                        <button 
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem 
                                             v-if="bill.status === 'UNPAID'"
                                             @click="handleResetPayment(bill.id)"
-                                            class="w-full text-left px-4 py-2 text-sm text-yellow-600 hover:bg-secondary/50 flex items-center gap-2"
+                                            class="gap-2 text-yellow-600"
                                         >
                                             <Clock class="w-4 h-4" />
                                             Reset Midtrans
-                                        </button>
-                                         <button 
-                                            class="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-secondary/50 flex items-center gap-2"
-                                            @click="activeBillId = null"
-                                        >
-                                            Batal
-                                        </button>
-                                    </div>
-                                </div>
-                                <!-- Backdrop for closing menu -->
-                                <div v-if="activeBillId === bill.id" class="fixed inset-0 z-0" @click="activeBillId = null"></div>
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
                         </div>
                     </div>

@@ -12,7 +12,18 @@ export const useAppStore = defineStore('app', () => {
 
     // Actions
     function toggleTheme() {
-        theme.value = theme.value === 'light' ? 'dark' : 'light'
+        setTheme(theme.value === 'light' ? 'dark' : 'light')
+    }
+
+    function setTheme(newTheme: 'light' | 'dark' | 'auto') {
+        if (newTheme === 'auto') {
+            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+            theme.value = systemTheme
+            localStorage.removeItem('theme')
+        } else {
+            theme.value = newTheme
+            localStorage.setItem('theme', newTheme)
+        }
     }
 
     function toggleSidebar() {
@@ -43,6 +54,7 @@ export const useAppStore = defineStore('app', () => {
         globalLoading,
         toggleTheme,
         toggleSidebar,
-        setGlobalLoading
+        setGlobalLoading,
+        setTheme
     }
 })

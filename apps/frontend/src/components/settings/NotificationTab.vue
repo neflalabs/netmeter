@@ -56,8 +56,8 @@
                                 <transition name="expand">
                                     <div v-if="!!form.autoNotifyNewBill" class="space-y-4 pt-1">
                                         <div class="flex items-center gap-3 p-3 bg-background/50 rounded-xl border border-border/50">
-                                            <label class="text-[11px] font-medium whitespace-nowrap">Waktu Pengiriman</label>
-                                            <input type="time" v-model="form.autoBillTime" class="ml-auto bg-background border border-border rounded-lg text-xs p-1.5 focus:ring-1 focus:ring-primary outline-none transition-all" />
+                                            <Label class="text-[11px] font-medium whitespace-nowrap">Waktu Pengiriman</Label>
+                                            <Input type="time" v-model="form.autoBillTime" class="ml-auto w-24 h-8 text-xs" />
                                         </div>
 
                                         <div class="space-y-2">
@@ -65,11 +65,11 @@
                                                 <p class="text-[11px] font-medium text-muted-foreground">Template Pesan</p>
                                                 <span class="text-[10px] text-muted-foreground italic">Shift+Enter untuk baris baru</span>
                                             </div>
-                                            <textarea
+                                            <Textarea
                                                 v-model="form.billTemplate"
-                                                class="flex min-h-[80px] w-full rounded-xl border border-border bg-background px-4 py-3 text-xs focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-muted-foreground/50"
+                                                class="min-h-[80px] rounded-xl text-xs placeholder:text-muted-foreground/50"
                                                 placeholder="Tulis template pesan di sini..."
-                                            ></textarea>
+                                            />
                                             <div class="flex flex-wrap gap-1.5">
                                                 <code v-for="v in variables" :key="v"
                                                     class="text-[9px] px-2 py-1 bg-secondary hover:bg-primary/10 hover:text-primary rounded-lg border border-border/50 cursor-pointer transition-colors"
@@ -105,10 +105,10 @@
                                         <div class="flex items-center justify-between px-0.5">
                                             <p class="text-[11px] font-medium text-muted-foreground">Template Pesan</p>
                                         </div>
-                                        <textarea
+                                        <Textarea
                                             v-model="form.paymentTemplate"
-                                            class="flex min-h-[80px] w-full rounded-xl border border-border bg-background px-4 py-3 text-xs focus:ring-1 focus:ring-primary outline-none transition-all"
-                                        ></textarea>
+                                            class="min-h-[80px] rounded-xl text-xs"
+                                        />
                                         <div class="flex flex-wrap gap-1.5">
                                             <code v-for="v in variables" :key="v" class="text-[9px] px-2 py-1 bg-secondary hover:bg-primary/10 hover:text-primary rounded-lg border border-border/50 cursor-pointer transition-colors" @click="copyVar(v)">{{ v }}</code>
                                         </div>
@@ -142,29 +142,29 @@
                                     <div v-if="!!form.autoReminderEnabled" class="space-y-4 pt-1">
                                         <div class="grid grid-cols-3 gap-3">
                                             <div class="space-y-1.5">
-                                                <label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">Frekuensi</label>
+                                                <Label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">Frekuensi</Label>
                                                 <div class="relative">
-                                                    <input type="number" v-model="form.globalReminderInterval" class="w-full bg-background border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary" />
+                                                    <Input type="number" v-model="form.globalReminderInterval" class="h-9 text-xs" />
                                                 </div>
                                             </div>
                                             <div class="space-y-1.5">
-                                                <label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">Waktu</label>
-                                                <input type="time" v-model="form.reminderTime" class="w-full bg-background border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary" />
+                                                <Label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">Waktu</Label>
+                                                <Input type="time" v-model="form.reminderTime" class="h-9 text-xs" />
                                             </div>
                                             <div class="space-y-1.5">
-                                                <label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">Jatuh Tempo</label>
+                                                <Label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">Jatuh Tempo</Label>
                                                 <div class="relative">
-                                                    <input type="number" v-model="form.globalDueDay" min="1" max="31" class="w-full bg-background border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary" />
+                                                    <Input type="number" v-model="form.globalDueDay" min="1" max="31" class="h-9 text-xs" />
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div class="space-y-2">
                                             <p class="text-[11px] font-medium text-muted-foreground px-0.5">Template Pengingat</p>
-                                            <textarea
+                                            <Textarea
                                                 v-model="form.reminderTemplate"
-                                                class="flex min-h-[80px] w-full rounded-xl border border-border bg-background px-4 py-3 text-xs focus:ring-1 focus:ring-primary outline-none transition-all"
-                                            ></textarea>
+                                                class="min-h-[80px] rounded-xl text-xs"
+                                            />
                                             <div class="flex flex-wrap gap-1.5">
                                                 <code v-for="v in variables" :key="v" class="text-[9px] px-2 py-1 bg-secondary hover:bg-primary/10 hover:text-primary rounded-lg border border-border/50 cursor-pointer transition-colors" @click="copyVar(v)">{{ v }}</code>
                                             </div>
@@ -197,16 +197,16 @@
 
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="p-3 bg-secondary/40 rounded-xl border border-border/40 space-y-1.5">
-                                    <label class="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-1.5">
+                                    <Label class="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-1.5">
                                         <Clock class="w-3 h-3" /> Mulai
-                                    </label>
-                                    <input type="time" v-model="form.quietHoursStart" class="w-full bg-transparent border-none text-sm font-medium p-0 focus:ring-0 outline-none" />
+                                    </Label>
+                                    <Input type="time" v-model="form.quietHoursStart" class="bg-transparent border-none text-sm font-medium h-7 p-0 focus-visible:ring-0" />
                                 </div>
                                 <div class="p-3 bg-secondary/40 rounded-xl border border-border/40 space-y-1.5">
-                                    <label class="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-1.5">
+                                    <Label class="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-1.5">
                                         <Clock class="w-3 h-3" /> Selesai
-                                    </label>
-                                    <input type="time" v-model="form.quietHoursEnd" class="w-full bg-transparent border-none text-sm font-medium p-0 focus:ring-0 outline-none" />
+                                    </Label>
+                                    <Input type="time" v-model="form.quietHoursEnd" class="bg-transparent border-none text-sm font-medium h-7 p-0 focus-visible:ring-0" />
                                 </div>
                             </div>
 
@@ -244,12 +244,14 @@ import {
     Receipt,
     CheckCircle2,
     Clock,
-    Moon,
-    Settings2
+    Moon
 } from 'lucide-vue-next'
 import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
 import Switch from '@/components/ui/Switch.vue'
+import Textarea from '@/components/ui/Textarea.vue'
+import Input from '@/components/ui/Input.vue'
+import Label from '@/components/ui/Label.vue'
 import type { UpdateSettingsDTO } from '@/types'
 
 defineProps<{

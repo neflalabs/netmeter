@@ -9,6 +9,29 @@ import { settingsSchema } from '@netmeter/shared';
 
 const app = new Hono();
 
+import QRCode from 'qrcode';
+
+// Preview QRIS String
+app.post('/preview-qris', async (c) => {
+    try {
+        const { content } = await c.req.json<{ content: string }>();
+        if (!content) return c.text('Content required', 400);
+
+        const qrImage = await QRCode.toBuffer(content, {
+            type: 'png',
+            width: 300,
+            margin: 2,
+            errorCorrectionLevel: 'M'
+        });
+
+        c.header('Content-Type', 'image/png');
+        return c.body(qrImage);
+    } catch (e) {
+        console.error('QR Preview Error:', e);
+        return c.text('Failed to generate QR', 500);
+    }
+});
+
 // Get Settings
 app.get('/', async (c) => {
     try {

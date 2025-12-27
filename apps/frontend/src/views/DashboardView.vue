@@ -3,6 +3,11 @@ import { ref, onMounted, computed } from 'vue'
 import { Plus, CreditCard, LogOut, Users, MoreHorizontal, Settings, Receipt, CheckCircle2, Clock, MessageCircle, Send, TrendingUp, Megaphone } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import Button from '@/components/ui/Button.vue'
+import Badge from '@/components/ui/Badge.vue'
+import DropdownMenu from '@/components/ui/DropdownMenu.vue'
+import DropdownMenuTrigger from '@/components/ui/DropdownMenuTrigger.vue'
+import DropdownMenuContent from '@/components/ui/DropdownMenuContent.vue'
+import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue'
 import Card from '@/components/ui/Card.vue'
 import CardHeader from '@/components/ui/CardHeader.vue'
 import CardTitle from '@/components/ui/CardTitle.vue'
@@ -55,7 +60,6 @@ const handleLogout = () => {
 }
 
 const isLoading = computed(() => billStore.isFetching || userStore.isFetching)
-const activeBillId = ref<number | null>(null)
 const sendingNotif = ref(false)
 const lastTransactionId = ref<number | null>(null)
 
@@ -82,7 +86,6 @@ const estimatedIncome = computed(() => {
 
 const handleNotify = async (id: number) => {
     sendingNotif.value = true
-    activeBillId.value = null
     try {
         const api = billsApi()
         await api.notify(id)
@@ -100,7 +103,6 @@ const handleNotify = async (id: number) => {
 
 const handlePaymentNotify = async (id: number) => {
     sendingNotif.value = true
-    activeBillId.value = null
     try {
         const api = billsApi()
         await api.notifyPayment(id)
@@ -335,13 +337,13 @@ onUnmounted(() => {
                         <Receipt class="w-4 h-4" />
                         Tagihan Bulan Ini
                     </CardTitle>
-                    <div class="flex items-center gap-2 text-xs">
-                        <span class="px-2 py-1 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 rounded-full border border-yellow-200 dark:border-yellow-900/50">
+                    <div class="flex items-center gap-2">
+                        <Badge variant="outline" class="bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-900/50">
                             {{ pendingBills.length }} Pending
-                        </span>
-                        <span class="px-2 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-full border border-green-200 dark:border-green-900/50">
+                        </Badge>
+                        <Badge variant="outline" class="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-900/50">
                             {{ paidBills.length }} Lunas
-                        </span>
+                        </Badge>
                     </div>
                 </div>
             </CardHeader>
@@ -370,59 +372,40 @@ onUnmounted(() => {
                             </div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <span 
-                                class="text-[10px] font-bold px-2 py-0.5 rounded-full border"
+                            <Badge 
+                                variant="outline"
                                 :class="bill.status === 'PAID' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-900/50' : 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-900/50'"
                             >
                                 {{ bill.status === 'PAID' ? 'LUNAS' : 'PENDING' }}
-                            </span>
+                            </Badge>
                             
-                             <div class="relative">
-                                <button class="h-8 w-8 flex items-center justify-center rounded-full hover:bg-secondary text-muted-foreground transition-colors" @click.stop="activeBillId = activeBillId === bill.id ? null : bill.id">
-                                    <MoreHorizontal class="w-4 h-4" />
-                                </button>
-                                
-                                <!-- Action Menu Dropdown -->
-                                <div 
-                                    v-if="activeBillId === bill.id" 
-                                    class="absolute right-0 top-full mt-1 w-56 bg-card rounded-lg shadow-lg border border-border z-10 py-1"
-                                    @click.stop
-                                >
-                                    <button 
+                             <DropdownMenu>
+                                <DropdownMenuTrigger as-child>
+                                    <Button variant="ghost" size="icon" class="h-8 w-8 rounded-full text-muted-foreground">
+                                        <MoreHorizontal class="w-4 h-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" class="w-56">
+                                    <DropdownMenuItem 
                                         v-if="bill.status === 'UNPAID'"
                                         @click="handleNotify(bill.id)"
                                         :disabled="sendingNotif"
-                                        class="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-secondary/50 flex items-center gap-2 disabled:opacity-50"
+                                        class="gap-2"
                                     >
                                         <MessageCircle class="w-4 h-4 text-blue-500" />
                                         Kirim Notifikasi Tagihan
-                                    </button>
-
-
-                                    <button 
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem 
                                         v-if="bill.status === 'PAID'"
                                         @click="handlePaymentNotify(bill.id)"
                                         :disabled="sendingNotif"
-                                        class="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-secondary/50 flex items-center gap-2 disabled:opacity-50"
+                                        class="gap-2"
                                     >
                                         <Send class="w-4 h-4 text-green-500" />
                                         Kirim Bukti Bayar
-                                    </button>
-
-                                    <div class="border-t border-border my-1"></div>
-
-                                    <button 
-                                        class="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                                        @click="activeBillId = null"
-                                    >
-                                        Batal
-                                    </button>
-                                </div>
-                                
-                                <!-- Backdrop (Invisible) handled by global click or use a fixed overlay if needed, but clicking outside usually needs a directive or overlay -->
-                            </div>
-                            <!-- Backdrop Overlay -->
-                            <div v-if="activeBillId === bill.id" class="fixed inset-0 z-0" @click="activeBillId = null"></div>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                             </DropdownMenu>
                         </div>
                     </div>
                 </div>

@@ -48,53 +48,53 @@
                         <CardContent class="p-5 space-y-4">
                             <div class="grid gap-4 sm:grid-cols-2">
                                 <div class="space-y-1.5">
-                                    <label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">Service URL</label>
-                                    <input
+                                    <Label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">Service URL</Label>
+                                    <Input
                                         v-model="form.waServiceUrl"
                                         type="text"
                                         placeholder="http://localhost:3030/api/v1"
-                                        class="w-full bg-background border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary transition-all"
+                                        class="h-9 text-xs"
                                     />
                                 </div>
                                 <div class="space-y-1.5">
-                                    <label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">Instance ID</label>
-                                    <input
+                                    <Label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">Instance ID</Label>
+                                    <Input
                                         v-model="form.waInstanceId"
                                         type="text"
                                         placeholder="Insert Wainthego instance ID"
-                                        class="w-full bg-background border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary transition-all"
+                                        class="h-9 text-xs"
                                     />
                                 </div>
                             </div>
                             <div class="grid gap-4 sm:grid-cols-2">
                                 <div class="space-y-1.5">
-                                    <label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">API Key (Master)</label>
-                                    <input
+                                    <Label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">API Key (Master)</Label>
+                                    <Input
                                         v-model="form.waApiKey"
                                         type="password"
                                         placeholder="Wainthego API Key"
-                                        class="w-full bg-background border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary transition-all"
+                                        class="h-9 text-xs"
                                     />
                                 </div>
                                 <div class="space-y-1.5">
-                                    <label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">Webhook Secret (Verification)</label>
-                                    <input
+                                    <Label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">Webhook Secret (Verification)</Label>
+                                    <Input
                                         v-model="form.waWebhookSecret"
                                         type="password"
                                         placeholder="Webhook Secret (Optional)"
-                                        class="w-full bg-background border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary transition-all"
+                                        class="h-9 text-xs"
                                     />
                                 </div>
                             </div>
 
                             <div class="space-y-1.5">
-                                <label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">Webhook URL (Copy to Wainthego)</label>
+                                <Label class="text-[10px] font-bold uppercase text-muted-foreground/70 ml-1">Webhook URL (Copy to Wainthego)</Label>
                                 <div class="relative">
-                                    <input
-                                        :value="webhookUrl"
+                                    <Input
+                                        :model-value="webhookUrl"
                                         type="text"
-                                        readOnly
-                                        class="w-full bg-secondary/30 border border-border rounded-xl text-xs p-2.5 outline-none focus:ring-1 focus:ring-primary transition-all font-mono"
+                                        readonly
+                                        class="h-9 text-xs bg-secondary/30 font-mono pr-12"
                                     />
                                     <Button
                                         variant="ghost"
@@ -206,6 +206,8 @@ import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
 import Switch from '@/components/ui/Switch.vue'
 import Button from '@/components/ui/Button.vue'
+import Input from '@/components/ui/Input.vue'
+import Label from '@/components/ui/Label.vue'
 
 import { useToast } from '@/composables/useToast'
 
@@ -223,7 +225,6 @@ const loadingLogs = ref(false)
 const activeFilter = ref<'ALL' | 'INCOMING' | 'OUTGOING'>('ALL')
 const copied = ref(false)
 
-const connectionStatus = computed(() => whatsappStore.connectionStatus)
 const checkingStatus = computed(() => whatsappStore.isFetching)
 
 const logFilters = [

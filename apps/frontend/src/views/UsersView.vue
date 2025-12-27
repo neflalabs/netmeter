@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { Plus, Search, Users, Edit2, Trash2, RotateCcw } from 'lucide-vue-next'
 import Button from '@/components/ui/Button.vue'
+import Badge from '@/components/ui/Badge.vue'
 import Card from '@/components/ui/Card.vue'
 import CardHeader from '@/components/ui/CardHeader.vue'
 import CardContent from '@/components/ui/CardContent.vue'
@@ -11,6 +12,7 @@ import AdminSidebar from '@/components/AdminSidebar.vue'
 import StatsCard from '@/components/StatsCard.vue'
 import { useFormatters } from '@/composables/useFormatters'
 import type { User } from '@/types'
+import Input from '@/components/ui/Input.vue'
 import UserDetailSheet from '@/components/users/UserDetailSheet.vue'
 import { useToast } from '@/composables/useToast'
 import { useUserStore } from '@/stores/user'
@@ -115,11 +117,11 @@ onMounted(() => {
                 <CardHeader class="pb-3 px-4 pt-4 border-b border-border">
                     <div class="flex items-center gap-2">
                         <Search class="w-4 h-4 text-muted-foreground" />
-                        <input 
+                        <Input 
                             v-model="searchQuery"
                             type="text" 
                             placeholder="Cari pengguna..." 
-                            class="flex-1 text-sm bg-transparent outline-none placeholder:text-muted-foreground text-foreground"
+                            class="flex-1 text-sm bg-transparent border-none focus-visible:ring-0"
                         />
                     </div>
                 </CardHeader>
@@ -152,19 +154,20 @@ onMounted(() => {
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span 
+                                <Badge 
                                     v-if="!user.deletedAt"
-                                    class="text-[10px] font-bold px-2 py-0.5 rounded-full border"
+                                    variant="outline"
                                     :class="user.status === 'ACTIVE' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-900/50' : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900/50'"
                                 >
                                     {{ user.status }}
-                                </span>
-                                <span 
+                                </Badge>
+                                <Badge 
                                     v-else
-                                    class="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-gray-50 dark:bg-gray-900/20 text-gray-700 dark:text-gray-400 border-gray-200 dark:border-gray-900/50"
+                                    variant="outline"
+                                    class="bg-gray-50 dark:bg-gray-900/20 text-gray-700 dark:text-gray-400 border-gray-200 dark:border-gray-900/50"
                                 >
                                     DELETED
-                                </span>
+                                </Badge>
                                 <Button 
                                     v-if="!user.deletedAt"
                                     variant="ghost" 

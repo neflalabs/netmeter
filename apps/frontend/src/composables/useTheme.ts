@@ -6,6 +6,7 @@ export function useTheme() {
 
     return {
         theme: computed(() => app.theme),
-        toggleTheme: app.toggleTheme
+        toggleTheme: app.toggleTheme,
+        setTheme: app.setTheme
     }
 }
