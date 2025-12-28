@@ -1,64 +1,23 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router'
-import { CheckCircle2, ChevronDown, ChevronUp, LayoutDashboard } from 'lucide-vue-next'
-import Button from '@/components/ui/Button.vue'
-import Footer from '@/components/Footer.vue'
-import Header from '@/components/Header.vue'
+import { CheckCircle2, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import AnnouncementBanner from '@/components/AnnouncementBanner.vue'
 import WelcomeHero from '@/components/WelcomeHero.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import UserAvatarStack from '@/components/UserAvatarStack.vue'
-import AppLogo from '@/components/AppLogo.vue'
-import { useAuthStore } from '@/stores/auth'
 
-const router = useRouter()
-const authStore = useAuthStore()
-const isLoggedIn = computed(() => authStore.isAuthenticated)
-const paidBills = ref<any[]>([])
-const isLoading = ref(true)
-const appSettings = ref<any>({
-    listingPerHome: 12 // Default to show all months
-})
+import { usePublicStore } from '@/stores/public'
 
-const fetchSettings = async () => {
-    try {
-        const res = await fetch('/api/public/settings')
-        if (res.ok) {
-            const data = await res.json()
-            if (data) {
-                appSettings.value.title = data.appTitle
-                appSettings.value.subtitle = data.appSubtitle
-                appSettings.value.listingPerHome = data.listingPerHome
-                appSettings.value.announcementTitle = data.announcementTitle
-                appSettings.value.announcementMessage = data.announcementMessage
-                appSettings.value.announcementType = data.announcementType
-                appSettings.value.announcementActive = data.announcementActive
-                appSettings.value.announcementCreatedAt = data.announcementCreatedAt
-                appSettings.value.announcementUpdatedAt = data.announcementUpdatedAt
-            }
-        }
-    } catch (e) {
-        console.error('Failed to fetch settings', e)
-    }
-}
-
-const fetchPublicBills = async () => {
-    try {
-        const res = await fetch('/api/public/bills')
-        if (res.ok) {
-            paidBills.value = await res.json()
-        }
-    } catch (e) {
-        console.error('Failed to fetch public bills', e)
-    } finally {
-        isLoading.value = false
-    }
-}
+const publicStore = usePublicStore()
+const paidBills = computed(() => publicStore.publicBills)
+const appSettings = computed(() => publicStore.settings || { listingPerHome: 12 })
 
 onMounted(() => {
-    fetchSettings()
-    fetchPublicBills()
+    // Polling will be started in App.vue, but we ensure initial fetch if needed
+    if (!publicStore.settings) {
+        publicStore.fetchSettings()
+        publicStore.fetchPublicBills()
+    }
 })
 
 const months = [
@@ -127,27 +86,14 @@ const getPaymentColorClass = (method: string) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-background pb-20">
-    <!-- Navbar / Header -->
-    <Header>
-        <template #title>
-             <AppLogo :title="appSettings.title" :subtitle="appSettings.subtitle" />
-        </template>
-        <template #actions>
-            <Button v-if="isLoggedIn" size="sm" variant="outline" @click="router.push('/dashboard')">
-                <LayoutDashboard class="w-4 h-4 mr-2" />
-                Dashboard
-            </Button>
-        </template>
-    </Header>
-
-    <section class="container mx-auto px-4 pt-6 max-w-2xl">
+  <div class="space-y-4">
+    <section class="container mx-auto px-4 pt-2 max-w-2xl">
         <AnnouncementBanner 
-            v-if="appSettings.announcementActive"
+            v-if="appSettings && 'announcementActive' in appSettings && appSettings.announcementActive"
             :active="true"
             :title="appSettings.announcementTitle"
             :message="appSettings.announcementMessage"
-            :type="appSettings.announcementType"
+            :type="appSettings.announcementType as any"
             :created-at="appSettings.announcementCreatedAt"
             :updated-at="appSettings.announcementUpdatedAt"
         />
@@ -250,7 +196,5 @@ const getPaymentColorClass = (method: string) => {
             </template>
         </div>
     </main>
-
-    <Footer />
   </div>
 </template>

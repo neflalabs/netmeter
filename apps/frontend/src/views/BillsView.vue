@@ -1,51 +1,49 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { PlusCircle, Receipt, CheckCircle2, Clock, Search, MoreHorizontal, Settings } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
+import { Search, Plus, MoreVertical, Send, ExternalLink, Receipt, Clock, CheckCircle2, RefreshCcw, Wallet } from 'lucide-vue-next'
+import { useBillStore } from '@/stores/bill'
+import { billsApi } from '@/api'
+import { useSettingsStore } from '@/stores/settings'
+import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
+import { useFormatters } from '@/composables/useFormatters'
+// Constants removed to fix lint
+
+// UI Components
 import Card from '@/components/ui/Card.vue'
 import CardHeader from '@/components/ui/CardHeader.vue'
+import CardTitle from '@/components/ui/CardTitle.vue'
 import CardContent from '@/components/ui/CardContent.vue'
-import StatsCard from '@/components/StatsCard.vue'
 import Button from '@/components/ui/Button.vue'
+import Input from '@/components/ui/Input.vue'
 import Badge from '@/components/ui/Badge.vue'
 import DropdownMenu from '@/components/ui/DropdownMenu.vue'
 import DropdownMenuTrigger from '@/components/ui/DropdownMenuTrigger.vue'
 import DropdownMenuContent from '@/components/ui/DropdownMenuContent.vue'
 import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue'
-import Header from '@/components/Header.vue'
-import Input from '@/components/ui/Input.vue'
-import AdminSidebar from '@/components/AdminSidebar.vue'
-import Footer from '@/components/Footer.vue'
 import PaymentDialog from '@/components/ui/PaymentDialog.vue'
 import BillSettingsDialog from '@/components/bills/BillSettingsDialog.vue'
-import { billsApi } from '@/api'
-import { useBillStore } from '@/stores/bill'
-import { useSettingsStore } from '@/stores/settings'
-import { useFormatters } from '@/composables/useFormatters'
-import { useToast } from '@/composables/useToast'
-import { useConfirm } from '@/composables/useConfirm'
-import type { UpdateSettingsDTO } from '@/types'
 
-const { formatCurrency, formatDate, getMonthName } = useFormatters()
+const { formatCurrency, getMonthName } = useFormatters()
 const { toast } = useToast()
 const { confirm } = useConfirm()
+const router = useRouter()
 
 const billStore = useBillStore()
 const settingsStore = useSettingsStore()
-
-const loading = computed(() => billStore.isFetching)
 const isGenerating = ref(false)
 const searchQuery = ref('')
-const filterStatus = ref<'ALL' | 'UNPAID' | 'PAID' > ('ALL')
+const filterStatus = ref('all')
 const isPaymentDialogOpen = ref(false)
-const isSettingsDialogOpen = ref(false)
-const settingsLoading = computed(() => settingsStore.isFetching)
+const isBillSettingsOpen = ref(false)
 const selectedBillId = ref<number | null>(null)
 
 const filteredBills = computed(() => {
     let result = billStore.bills
     
     // Filter by status
-    if (filterStatus.value !== 'ALL') {
+    if (filterStatus.value !== 'all') {
         result = result.filter(b => b.status === filterStatus.value)
     }
     
@@ -60,16 +58,6 @@ const filteredBills = computed(() => {
     
     return result
 })
-
-const pendingCount = computed(() => billStore.bills.filter(b => b.status === 'UNPAID').length)
-const paidCount = computed(() => billStore.bills.filter(b => b.status === 'PAID').length)
-const pendingAmount = computed(() => billStore.bills.filter(b => b.status === 'UNPAID').reduce((sum, b) => sum + (b.amount || 0), 0))
-
-const tabs = computed(() => [
-    { id: 'ALL' as const, label: 'Semua', icon: Receipt },
-    { id: 'UNPAID' as const, label: 'Pending', icon: Clock, count: pendingCount.value },
-    { id: 'PAID' as const, label: 'Lunas', icon: CheckCircle2, count: paidCount.value }
-])
 
 const generateBills = async () => {
     const confirmed = await confirm({
@@ -121,219 +109,216 @@ const handlePaymentConfirm = async ({ date, method }: { date: Date, method: 'CAS
     }
 }
 
-const handleResetPayment = async (id: number) => {
-    const confirmed = await confirm({
-        title: 'Reset Transaksi',
-        message: 'Apakah Anda yakin ingin membatalkan transaksi Midtrans yang sedang berjalan? Ini akan memungkinkan pengguna untuk memilih metode pembayaran baru.',
-        confirmText: 'Ya, Reset'
-    })
+const sendingNotif = ref(false)
 
-    if (!confirmed) return
-
+const handleNotify = async (id: number) => {
+    sendingNotif.value = true
     try {
         const api = billsApi()
-        await api.cancelPayment(id)
+        await api.notify(id)
         toast({
             title: 'Berhasil',
-            description: 'Transaksi Midtrans berhasil di-reset.',
+            description: 'Notifikasi tagihan berhasil dikirim.',
             variant: 'success'
         })
-        billStore.fetchBills(true)
     } catch (error: any) {
         console.error(error)
     } finally {
-        // Dropdown closes automatically
+        sendingNotif.value = false
     }
 }
 
-const openSettings = async () => {
-    isSettingsDialogOpen.value = true
-    // Fetch fresh settings in background or from store
-    await settingsStore.fetchSettings(true)
-}
-
-const handleSettingsSave = async (updates: Partial<UpdateSettingsDTO>) => {
+const handlePaymentNotify = async (id: number) => {
+    sendingNotif.value = true
     try {
-        // Fetch current settings first to merge safely (store handles this in updateSettings if we wanted, but we pass full DTO)
-        const current = await settingsStore.fetchSettings()
-        const merged = { ...current, ...updates } as UpdateSettingsDTO
-        
-        await settingsStore.updateSettings(merged)
-        
+        const api = billsApi()
+        await api.notifyPayment(id)
         toast({
             title: 'Berhasil',
-            description: 'Pengaturan tagihan berhasil disimpan.',
+            description: 'Bukti bayar berhasil dikirim.',
             variant: 'success'
         })
-        isSettingsDialogOpen.value = false
     } catch (error: any) {
+        console.error(error)
+    } finally {
+        sendingNotif.value = false
+    }
+}
+
+const handleSaveSettings = async (newSettings: any) => {
+    try {
+        await settingsStore.updateSettings(newSettings)
+        toast({
+            title: 'Berhasil',
+            description: 'Pengaturan harga berhasil diperbarui.',
+            variant: 'success'
+        })
+        isBillSettingsOpen.value = false
+    } catch (error) {
         console.error(error)
     }
 }
 
+// handleDelete removed as backend lacks delete bill endpoint
 
 onMounted(() => {
     billStore.fetchBills()
+    settingsStore.fetchSettings()
 })
 </script>
 
 <template>
-  <div class="min-h-screen bg-background pb-20 md:pb-6 flex">
-    <!-- Desktop Sidebar -->
-    <AdminSidebar />
+  <div class="space-y-6">
+    <!-- Header/Filter Area -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="relative flex-1 max-w-sm">
+            <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input 
+                v-model="searchQuery" 
+                placeholder="Cari user atau bulan..." 
+                class="pl-10"
+            />
+        </div>
+        
+        <div class="flex items-center gap-2">
+             <Button @click="isBillSettingsOpen = true" variant="ghost" size="icon" class="text-muted-foreground">
+                <Wallet class="w-4 h-4" />
+            </Button>
+             <Button @click="generateBills" variant="outline" class="gap-2" :disabled="isGenerating">
+                <Plus class="w-4 h-4" />
+                Buat Tagihan
+            </Button>
+            <Button @click="billStore.fetchBills(true)" variant="secondary" size="icon" :disabled="billStore.isFetching">
+                <RefreshCcw class="w-4 h-4" :class="{ 'animate-spin': billStore.isFetching }" />
+            </Button>
+        </div>
+    </div>
 
-    <!-- Main Content Area -->
-    <div class="flex-1 flex flex-col md:ml-64 transition-all duration-300 min-w-0 overflow-x-hidden">
-        <Header 
-            title="Tagihan" 
-            subtitle="Kelola tagihan pelanggan"
-            :show-back="true"
-        >
-            <template #actions>
-                <Button size="sm" @click="generateBills" :disabled="isGenerating">
-                    <PlusCircle class="w-4 h-4 mr-1" />
-                    {{ isGenerating ? 'Memproses...' : 'Generate' }}
-                </Button>
-                <Button variant="outline" size="icon" @click="openSettings">
-                    <Settings class="w-4 h-4" />
-                </Button>
-            </template>
-        </Header>
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card>
+            <CardHeader class="pb-2">
+                <CardTitle class="text-xs font-medium text-muted-foreground uppercase flex items-center gap-2">
+                    <Clock class="w-3.5 h-3.5" />
+                    Pending
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div class="text-2xl font-bold text-yellow-500">{{ billStore.bills.filter(b => b.status === 'UNPAID').length }}</div>
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader class="pb-2">
+                <CardTitle class="text-xs font-medium text-muted-foreground uppercase flex items-center gap-2">
+                    <CheckCircle2 class="w-3.5 h-3.5" />
+                    Lunas
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div class="text-2xl font-bold text-green-500">{{ billStore.bills.filter(b => b.status === 'PAID').length }}</div>
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader class="pb-2">
+                <CardTitle class="text-xs font-medium text-muted-foreground uppercase flex items-center gap-2">
+                    <Receipt class="w-3.5 h-3.5" />
+                    Total Piutang
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div class="text-2xl font-bold">Rp {{ formatCurrency(billStore.bills.filter(b => b.status === 'UNPAID').reduce((sum, b) => sum + b.amount, 0)) }}</div>
+            </CardContent>
+        </Card>
+    </div>
 
-        <main class="container mx-auto px-4 py-6 md:max-w-4xl space-y-4 w-full">
-            <!-- Stats Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <StatsCard
-                    title="Pending"
-                    :value="pendingCount"
-                    :description="`Rp ${formatCurrency(pendingAmount)}`"
-                    variant="warning"
-                    :icon="Clock"
-                />
-                <StatsCard
-                    title="Lunas"
-                    :value="paidCount"
-                    description="Tagihan sudah dibayar"
-                    variant="success"
-                    :icon="CheckCircle2"
-                />
+    <!-- Bills Table -->
+    <Card>
+        <CardContent class="p-0">
+            <div v-if="billStore.isFetching && billStore.bills.length === 0" class="p-8 text-center text-muted-foreground">
+                <div class="animate-pulse">Memuat data tagihan...</div>
             </div>
-
-            <!-- Bills List with Tabs -->
-            <Card>
-                <!-- Tabs -->
-                <div class="border-b border-border">
-                    <div class="flex overflow-x-auto scrollbar-hide">
-                        <button 
-                            v-for="tab in tabs" 
-                            :key="tab.id"
-                            @click="filterStatus = tab.id"
-                            class="px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors flex items-center gap-2"
-                            :class="filterStatus === tab.id ? 'border-primary text-primary bg-primary/10' : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-secondary/50'"
+            <div v-else-if="filteredBills.length === 0" class="p-8 text-center text-muted-foreground">
+                <Receipt class="w-12 h-12 mx-auto mb-2 opacity-20" />
+                <p>Tidak ada data tagihan ditemukan</p>
+            </div>
+            <div v-else class="divide-y divide-border">
+                <div v-for="bill in filteredBills" :key="bill.id" class="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-secondary/50 transition-colors gap-3">
+                    <div class="flex items-center gap-4">
+                        <div 
+                            class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm shrink-0"
+                            :class="bill.status === 'PAID' ? 'bg-gradient-to-br from-green-500 to-emerald-500' : 'bg-gradient-to-br from-yellow-500 to-orange-500'"
                         >
-                            <component :is="tab.icon" class="w-4 h-4" />
-                            {{ tab.label }}
-                            <span v-if="tab.count !== undefined" class="text-xs px-1.5 py-0.5 rounded-full" :class="filterStatus === tab.id ? 'bg-primary/20 text-primary' : 'bg-secondary text-muted-foreground'">
-                                {{ tab.count }}
-                            </span>
-                        </button>
-                    </div>
-                </div>
-
-                <CardHeader class="pb-3 px-4 pt-4 border-b border-border">
-                    <div class="flex items-center gap-2">
-                        <Search class="w-4 h-4 text-muted-foreground" />
-                        <Input 
-                            v-model="searchQuery"
-                            type="text" 
-                            placeholder="Cari tagihan..." 
-                            class="flex-1 text-sm bg-transparent border-none focus-visible:ring-0"
-                        />
-                    </div>
-                </CardHeader>
-                <CardContent class="p-0">
-                    <div v-if="loading" class="p-8 text-center text-muted-foreground">
-                        <div class="animate-pulse">Memuat data...</div>
-                    </div>
-                    
-                    <div v-else-if="filteredBills.length === 0" class="p-8 text-center text-muted-foreground">
-                        <Receipt class="w-12 h-12 mx-auto mb-2 text-muted-foreground/50" />
-                        <p class="font-medium">Belum ada tagihan</p>
-                        <p class="text-xs mt-1">Klik "Generate" untuk membuat tagihan bulan ini</p>
-                    </div>
-
-                    <div v-else class="divide-y divide-border">
-                        <div v-for="bill in filteredBills" :key="bill.id" class="flex items-center justify-between p-4 hover:bg-secondary/50 transition-colors">
-                            <div class="flex items-center gap-3">
-                                <div 
-                                    class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm"
-                                    :class="bill.status === 'PAID' ? 'bg-gradient-to-br from-green-500 to-emerald-500' : 'bg-gradient-to-br from-yellow-500 to-orange-500'"
-                                >
-                                    <CheckCircle2 v-if="bill.status === 'PAID'" class="w-5 h-5" />
-                                    <Clock v-else class="w-5 h-5" />
-                                </div>
-                                <div>
-                                    <div class="font-medium text-foreground">{{ bill.userName }}</div>
-                                    <div class="text-xs text-muted-foreground mb-0.5">{{ getMonthName(bill.month) }} {{ bill.year }} • Rp {{ formatCurrency(bill.amount) }}</div>
-                                    <div v-if="bill.createdAt" class="text-[10px] text-muted-foreground">
-                                        Dibuat: {{ formatDate(bill.createdAt) }}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <Badge 
-                                    variant="outline"
-                                    :class="bill.status === 'PAID' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-900/50' : 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-900/50'"
-                                >
-                                    {{ bill.status === 'PAID' ? 'LUNAS' : 'PENDING' }}
-                                </Badge>
-                                
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger as-child>
-                                        <Button variant="ghost" size="icon" class="h-8 w-8 text-muted-foreground">
-                                            <MoreHorizontal class="w-4 h-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" class="w-48">
-                                        <DropdownMenuItem 
-                                            v-if="bill.status === 'UNPAID'"
-                                            @click="openPaymentDialog(bill.id)"
-                                            class="gap-2"
-                                        >
-                                            <CheckCircle2 class="w-4 h-4 text-green-600" />
-                                            Tandai Lunas
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem 
-                                            v-if="bill.status === 'UNPAID'"
-                                            @click="handleResetPayment(bill.id)"
-                                            class="gap-2 text-yellow-600"
-                                        >
-                                            <Clock class="w-4 h-4" />
-                                            Reset Midtrans
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                            {{ (bill.userName || 'U').charAt(0).toUpperCase() }}
+                        </div>
+                        <div>
+                            <div class="font-bold text-foreground">{{ bill.userName || 'Pelanggan' }}</div>
+                            <div class="text-xs text-muted-foreground flex items-center gap-2">
+                                <span>{{ getMonthName(bill.month) }} {{ bill.year }}</span>
+                                <span class="w-1 h-1 rounded-full bg-border"></span>
+                                <span class="font-medium text-foreground">Rp {{ formatCurrency(bill.amount) }}</span>
                             </div>
                         </div>
                     </div>
-                </CardContent>
-            </Card>
-        </main>
+                    
+                    <div class="flex items-center justify-between sm:justify-end gap-3 px-2 sm:px-0">
+                        <Badge 
+                            variant="outline"
+                            :class="bill.status === 'PAID' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-900/50' : 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-900/50'"
+                        >
+                            {{ bill.status === 'PAID' ? 'Lunas' : 'Pending' }}
+                        </Badge>
 
-        <Footer />
-    </div>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger as-child>
+                                <Button variant="ghost" size="icon" class="h-8 w-8 rounded-full text-muted-foreground">
+                                    <MoreVertical class="w-4 h-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" class="w-56">
+                                <DropdownMenuItem @click="router.push(`/pay/${bill.paymentToken}`)" class="gap-2">
+                                    <ExternalLink class="w-4 h-4" />
+                                    Buka Halaman Bayar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem @click="handleNotify(bill.id)" :disabled="sendingNotif" class="gap-2">
+                                    <Send class="w-4 h-4 text-blue-500" />
+                                    Kirim Notif WhatsApp
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                    v-if="bill.status === 'UNPAID'"
+                                    @click="openPaymentDialog(bill.id)"
+                                    class="gap-2"
+                                >
+                                    <CheckCircle2 class="w-4 h-4 text-green-500" />
+                                    Tandai Lunas (Cash)
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                    v-if="bill.status === 'PAID'"
+                                    @click="handlePaymentNotify(bill.id)"
+                                    class="gap-2"
+                                >
+                                    <Send class="w-4 h-4 text-green-500" />
+                                    Kirim Bukti Bayar
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                </div>
+            </div>
+        </CardContent>
+    </Card>
 
     <PaymentDialog 
         :is-open="isPaymentDialogOpen" 
         @close="isPaymentDialogOpen = false"
         @confirm="handlePaymentConfirm"
     />
+
     <BillSettingsDialog
-        :is-open="isSettingsDialogOpen"
+        :is-open="isBillSettingsOpen"
+        :loading="settingsStore.isFetching"
         :initial-settings="settingsStore.settings || {}"
-        :loading="settingsLoading"
-        @close="isSettingsDialogOpen = false"
-        @save="handleSettingsSave"
+        @close="isBillSettingsOpen = false"
+        @save="handleSaveSettings"
     />
   </div>
 </template>

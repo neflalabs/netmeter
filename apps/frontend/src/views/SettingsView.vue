@@ -1,108 +1,93 @@
 <template>
-  <div class="min-h-screen bg-background pb-20 md:pb-6 flex">
-    <!-- Desktop Sidebar -->
-    <AdminSidebar />
-
-    <!-- Main Content Area -->
-    <div class="flex-1 flex flex-col md:ml-64 transition-all duration-300 min-w-0 overflow-x-hidden">
-        <Header 
-            title="Settings" 
-            subtitle="Konfigurasi aplikasi Netmeter"
-            :show-back="true"
-        />
-
-        <main class="container mx-auto px-4 py-6 md:max-w-4xl space-y-6 w-full">
-            <!-- Status Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <!-- WhatsApp Status -->
-                <StatsCard 
-                    title="WhatsApp API" 
-                    :icon="MessageCircle" 
-                    :variant="waCardVariant"
-                >
-                    <div v-if="!form.waEnabled" class="flex items-center gap-2">
-                        Disabled
-                        <XCircle class="w-6 h-6" />
-                    </div>
-                    <div v-else-if="waStatus === 'CONNECTED'">
-                        <div class="text-xl font-bold truncate">{{ waUser?.name || 'WhatsApp User' }}</div>
-                    </div>
-                    <div v-else class="flex items-center gap-2">
-                        Disconnected
-                        <XCircle class="w-6 h-6" />
-                    </div>
-
-                    <template #footer v-if="form.waEnabled && waStatus === 'CONNECTED'">
-                        <div class="flex items-center gap-1 mt-1">
-                             <div class="text-xs font-mono bg-white/20 px-1 rounded">
-                                +{{ waUser?.id }}
-                             </div>
-                             <CheckCircle2 class="w-3 h-3 ml-auto" />
-                        </div>
-                    </template>
-                </StatsCard>
-
-                <!-- Payment Gateway Status -->
-                <StatsCard 
-                    title="Payment Gateway" 
-                    :icon="CreditCard" 
-                    :variant="paymentStatusVariant"
-                >
-                    <div class="flex items-center gap-2">
-                        {{ paymentStatusText }}
-                        <component :is="paymentStatusIcon" class="w-6 h-6" />
-                    </div>
-                </StatsCard>
+  <div class="space-y-6">
+    <!-- Status Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- WhatsApp Status -->
+        <StatsCard 
+            title="WhatsApp API" 
+            :icon="MessageCircle" 
+            :variant="waCardVariant"
+        >
+            <div v-if="!form.waEnabled" class="flex items-center gap-2">
+                Disabled
+                <XCircle class="w-6 h-6" />
+            </div>
+            <div v-else-if="waStatus === 'CONNECTED'">
+                <div class="text-xl font-bold truncate">{{ waUser?.name || 'WhatsApp User' }}</div>
+            </div>
+            <div v-else class="flex items-center gap-2">
+                Disconnected
+                <XCircle class="w-6 h-6" />
             </div>
 
-            <!-- Settings Tabs -->
-            <Card>
-                <div class="border-b border-border">
-                    <div class="flex overflow-x-auto scrollbar-hide">
-                        <button 
-                            v-for="tab in tabs" 
-                            :key="tab.id"
-                            @click="activeTab = tab.id"
-                            class="px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors flex items-center gap-2"
-                            :class="activeTab === tab.id ? 'border-primary text-primary bg-primary/10' : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-secondary'"
-                        >
-                            <component :is="tab.icon" class="w-4 h-4" />
-                            {{ tab.label }}
-                        </button>
-                    </div>
+            <template #footer v-if="form.waEnabled && waStatus === 'CONNECTED'">
+                <div class="flex items-center gap-1 mt-1">
+                        <div class="text-xs font-mono bg-white/20 px-1 rounded">
+                        +{{ waUser?.id }}
+                        </div>
+                        <CheckCircle2 class="w-3 h-3 ml-auto" />
                 </div>
+            </template>
+        </StatsCard>
 
-                <CardContent class="p-6">
-                    <!-- General Tab -->
-                    <GeneralTab v-if="activeTab === 'general'" :form="form" />
-
-
-                    <!-- WhatsApp Bot Tab -->
-                    <WhatsappBotTab v-if="activeTab === 'whatsapp'" :form="form" />
-
-                    <!-- Payment Gateway Tab -->
-                    <PaymentTab v-if="activeTab === 'payment'" :form="form" />
-
-                    <!-- Notification Tab -->
-                    <NotificationTab v-if="activeTab === 'notifications'" :form="form" />
-
-                    <!-- Backup Tab -->
-                    <BackupTab v-if="activeTab === 'backup'" />
-
-                    <!-- Save Button (Global for General, Pricing, Whatsapp, Notifications) -->
-                    <div v-if="['general', 'whatsapp', 'payment', 'notifications'].includes(activeTab)" class="pt-6 mt-6 border-t border-border">
-                        <Button class="w-full sm:w-auto" @click="saveSettings" :disabled="loading">
-                            <Save class="w-4 h-4 mr-2" />
-                            <span v-if="loading">Menyimpan...</span>
-                            <span v-else>Simpan Perubahan</span>
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
-        </main>
-        <Footer />
+        <!-- Payment Gateway Status -->
+        <StatsCard 
+            title="Payment Gateway" 
+            :icon="CreditCard" 
+            :variant="paymentStatusVariant"
+        >
+            <div class="flex items-center gap-2">
+                {{ paymentStatusText }}
+                <component :is="paymentStatusIcon" class="w-6 h-6" />
+            </div>
+        </StatsCard>
     </div>
-  </div>
+
+    <!-- Settings Tabs -->
+    <Card>
+        <div class="border-b border-border">
+            <div class="flex overflow-x-auto scrollbar-hide">
+                <button 
+                    v-for="tab in tabs" 
+                    :key="tab.id"
+                    @click="activeTab = tab.id"
+                    class="px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors flex items-center gap-2"
+                    :class="activeTab === tab.id ? 'border-primary text-primary bg-primary/10' : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-secondary'"
+                >
+                    <component :is="tab.icon" class="w-4 h-4" />
+                    {{ tab.label }}
+                </button>
+            </div>
+        </div>
+
+        <CardContent class="p-6">
+            <!-- General Tab -->
+            <GeneralTab v-if="activeTab === 'general'" :form="form" />
+
+
+            <!-- WhatsApp Bot Tab -->
+            <WhatsappBotTab v-if="activeTab === 'whatsapp'" :form="form" />
+
+            <!-- Payment Gateway Tab -->
+            <PaymentTab v-if="activeTab === 'payment'" :form="form" />
+
+            <!-- Notification Tab -->
+            <NotificationTab v-if="activeTab === 'notifications'" :form="form" />
+
+            <!-- Backup Tab -->
+            <BackupTab v-if="activeTab === 'backup'" />
+
+            <!-- Save Button (Global for General, Pricing, Whatsapp, Notifications) -->
+            <div v-if="['general', 'whatsapp', 'payment', 'notifications'].includes(activeTab)" class="pt-6 mt-6 border-t border-border">
+                <Button class="w-full sm:w-auto" @click="saveSettings" :disabled="loading">
+                    <Save class="w-4 h-4 mr-2" />
+                    <span v-if="loading">Menyimpan...</span>
+                    <span v-else>Simpan Perubahan</span>
+                </Button>
+            </div>
+        </CardContent>
+    </Card>
+</div>
 </template>
 
 <script setup lang="ts">
@@ -110,9 +95,6 @@ import { ref, onMounted, computed } from 'vue'
 import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
 import Button from '@/components/ui/Button.vue'
-import Header from '@/components/Header.vue'
-import AdminSidebar from '@/components/AdminSidebar.vue'
-import Footer from '@/components/Footer.vue'
 import StatsCard from '@/components/StatsCard.vue'
 import { 
     Settings, 

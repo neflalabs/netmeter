@@ -1,6 +1,6 @@
 <template>
   <div 
-    class="w-full rounded-2xl border border-border bg-card/50 backdrop-blur-sm p-6 shadow-sm overflow-hidden relative group transition-all duration-300 hover:shadow-md hover:border-primary/20"
+    class="w-full rounded-2xl border border-border bg-card/50 backdrop-blur-sm p-4 shadow-sm overflow-hidden relative group transition-all duration-300 hover:shadow-md hover:border-primary/20"
   >
     <!-- Background Decorative Elements -->
     <div class="absolute -right-8 -top-8 w-32 h-32 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors duration-500"></div>
@@ -18,7 +18,7 @@
         <!-- Text Content -->
         <div class="flex-1">
             <h2 class="text-xl font-black text-foreground tracking-tight">
-                Selamat {{ timeConfig.label }}, <span class="text-primary">Tetangga!</span>
+                Selamat {{ timeConfig.label }}, <span class="text-primary">Warga!</span>
             </h2>
             <p class="text-sm text-muted-foreground mt-1 leading-relaxed">
                 {{ timeConfig.quote }}
@@ -29,7 +29,7 @@
                     <Wifi class="w-3 h-3 text-green-500" />
                     <span class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Koneksi Lancar</span>
                 </div>
-                <div class="text-[10px] font-medium text-muted-foreground italic opacity-60">
+                <div class="text-[10px] font-medium text-muted-foreground italic opacity-60">Jam : 
                    {{ currentTime }}
                 </div>
             </div>

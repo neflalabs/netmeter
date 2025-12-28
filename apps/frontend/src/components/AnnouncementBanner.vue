@@ -5,7 +5,7 @@
      :class="variants[type].border"
   >
     <!-- Header -->
-    <div class="px-5 py-3 flex items-center justify-between border-b" :class="variants[type].header">
+    <div class="px-4 py-2 flex items-center justify-between border-b" :class="variants[type].header">
         <div class="flex items-center gap-3">
             <div class="p-2 rounded-lg" :class="variants[type].iconBg">
                 <component :is="icons[type]" class="w-5 h-5" :class="variants[type].iconColor" />
@@ -25,7 +25,7 @@
     </div>
     
     <!-- Body -->
-    <div class="px-5 py-4" :class="variants[type].body">
+    <div class="px-4 py-3" :class="variants[type].body">
         <div 
             class="text-sm leading-relaxed text-justify prose prose-sm max-w-none prose-strong:text-current prose-p:text-current prose-headings:text-current prose-li:text-current prose-a:text-current prose-a:underline hover:prose-a:opacity-80 transition-opacity" 
             :class="[

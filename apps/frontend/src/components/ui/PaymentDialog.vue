@@ -16,9 +16,9 @@
                 </div>
                 
                 <div class="space-y-2">
-                    <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    <Label>
                         Metode Pembayaran
-                    </label>
+                    </Label>
                     <select 
                         v-model="paymentMethod"
                         class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -29,9 +29,9 @@
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    <Label>
                         Tanggal Pembayaran
-                    </label>
+                    </Label>
                     <div class="relative">
                         <!-- Hidden native date input for picker functionality -->
                         <input 
@@ -72,6 +72,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import Button from '@/components/ui/Button.vue' 
+import Label from '@/components/ui/Label.vue'
 import { Calendar } from 'lucide-vue-next'
 
 // Helper to format Date to YYYY-MM-DD local

@@ -16,14 +16,17 @@
         </div>
 
         <!-- Restore Backup -->
-        <div class="p-6 bg-red-50 dark:bg-red-900/10 rounded-lg border border-red-200 dark:border-red-900/50">
-            <h4 class="font-medium text-red-900 dark:text-red-400 mb-2">Restore Database</h4>
-            <p class="text-sm text-red-600 dark:text-red-300 mb-4">
-                <strong>Perhatian:</strong> Restore akan menimpa seluruh data saat ini dengan data dari file backup. 
-                Data user, tagihan, dan pengaturan saat ini akan hilang.
-            </p>
+        <div class="space-y-4">
+            <Alert variant="destructive">
+                <AlertTriangle class="h-4 w-4" />
+                <AlertTitle>Restore Database</AlertTitle>
+                <AlertDescription>
+                    <strong>Perhatian:</strong> Restore akan menimpa seluruh data saat ini dengan data dari file backup. 
+                    Data user, tagihan, dan pengaturan saat ini akan hilang.
+                </AlertDescription>
+            </Alert>
 
-            <div class="space-y-4">
+            <div class="p-6 bg-secondary/10 rounded-lg border border-border space-y-4">
                 <div class="flex items-center gap-4">
                     <input 
                         ref="fileInput" 
@@ -39,16 +42,15 @@
                     />
                 </div>
 
-                <div v-if="selectedFile" class="flex items-center space-x-2 bg-white/50 p-3 rounded border border-red-100">
-                    <input 
+                <div v-if="selectedFile" class="flex items-center space-x-2 bg-background p-3 rounded-lg border border-destructive/20">
+                    <Checkbox 
                         id="confirm-restore" 
-                        v-model="confirmationChecked"
-                        type="checkbox" 
-                        class="h-4 w-4 text-red-600 rounded border-gray-300 focus:ring-red-500"
+                        :checked="confirmationChecked"
+                        @update:checked="(val) => confirmationChecked = val"
                     />
-                    <label for="confirm-restore" class="text-sm text-red-800 cursor-pointer select-none">
+                    <Label for="confirm-restore" class="text-xs text-destructive cursor-pointer select-none leading-tight font-medium">
                         Saya mengerti bahwa tindakan ini akan <strong>menghapus seluruh data saat ini</strong> dan tidak dapat dibatalkan.
-                    </label>
+                    </Label>
                 </div>
                 
                 <Button 
@@ -69,9 +71,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import Button from '@/components/ui/Button.vue'
-import { DownloadCloud, UploadCloud } from 'lucide-vue-next'
+import { DownloadCloud, UploadCloud, AlertTriangle } from 'lucide-vue-next'
 import { backupApi } from '@/api'
 import { useToast } from '@/composables/useToast'
+import Alert from '@/components/ui/Alert.vue'
+import AlertTitle from '@/components/ui/AlertTitle.vue'
+import AlertDescription from '@/components/ui/AlertDescription.vue'
+import Checkbox from '@/components/ui/Checkbox.vue'
+import Label from '@/components/ui/Label.vue'
 
 const selectedFile = ref<File | null>(null)
 const isRestoring = ref(false)

@@ -14,68 +14,69 @@ const router = createRouter({
         {
             path: '/',
             name: 'home',
-            component: HomeView
+            component: HomeView,
+            meta: { layout: 'public', title: 'NetMeter' }
         },
         {
             path: '/login',
             name: 'login',
-            component: LoginView
+            component: LoginView,
+            meta: { layout: 'public', title: 'NetMeter', showBack: true, backTo: '/' }
         },
         {
             path: '/dashboard',
             name: 'dashboard',
             component: DashboardView,
-            meta: { requiresAuth: true }
+            meta: { layout: 'admin', requiresAuth: true, title: 'Admin Dashboard', subtitle: 'Ikhtisar aktivitas jaringan' }
         },
         {
             path: '/bills',
             name: 'bills',
             component: BillsView,
-            meta: { requiresAuth: true }
+            meta: { layout: 'admin', requiresAuth: true, title: 'Kelola Tagihan', subtitle: 'Daftar semua tagihan pelanggan' }
         },
         {
             path: '/pay/:token',
             name: 'public-bill',
             component: () => import('../views/PublicBillView.vue'),
-            meta: { layout: 'public' }
+            meta: { layout: 'public', title: 'Pembayaran Tagihan' }
         },
         {
             path: '/stats',
             name: 'stats',
             component: () => import('../views/StatsView.vue'),
-            meta: { requiresAuth: true }
+            meta: { layout: 'admin', requiresAuth: true, title: 'Statistik & Laporan', subtitle: 'Analisa performa bisnis Anda' }
         },
         {
-            path: '/settings', // Added new route for settings
+            path: '/settings',
             name: 'settings',
             component: SettingsView,
-            meta: { requiresAuth: true }
+            meta: { layout: 'admin', requiresAuth: true, title: 'Pengaturan Sistem', subtitle: 'Konfigurasi aplikasi dan layanan' }
         },
         {
             path: '/announcement',
             name: 'announcement',
             component: () => import('../views/AnnouncementView.vue'),
-            meta: { requiresAuth: true }
+            meta: { layout: 'admin', requiresAuth: true, title: 'Pengumuman', subtitle: 'Kelola pengumuman di halaman utama' }
         },
         {
             path: '/users',
             name: 'users',
             component: UsersView,
-            meta: { requiresAuth: true }
+            meta: { layout: 'admin', requiresAuth: true, title: 'Manajemen User', subtitle: 'Kelola database pelanggan Anda' }
         },
         {
             path: '/users/new',
             name: 'create-user',
             component: () => import('@/components/users/CreateUserView.vue'),
-            meta: { requiresAuth: true }
+            meta: { layout: 'admin', requiresAuth: true, title: 'Tambah User', subtitle: 'Daftarkan pelanggan baru', showBack: true, backTo: '/users' }
         },
         {
             path: '/users/:id/edit',
             name: 'edit-user',
             component: () => import('../components/users/EditUserView.vue'),
-            meta: { requiresAuth: true }
+            meta: { layout: 'admin', requiresAuth: true, title: 'Edit User', subtitle: 'Ubah informasi pelanggan', showBack: true, backTo: '/users' }
         },
-
     ]
 })
 

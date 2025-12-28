@@ -3,13 +3,16 @@ export const API_ENDPOINTS = {
     USERS: '/api/users',
     BILLS: '/api/bills',
     SETTINGS: '/api/settings',
-    WHATSAPP: '/api/whatsapp',
-    BACKUP: '/api/backup'
+    REPORTS: '/api/reports' as const, // For stats
+    BACKUP: '/api/backup',
+    WHATSAPP: '/api/whatsapp'
 } as const
 
 export const USER_STATUS = {
     ACTIVE: 'ACTIVE',
-    INACTIVE: 'INACTIVE'
+    INACTIVE: 'INACTIVE',
+    SUSPENDED: 'SUSPENDED',
+    DELETED: 'DELETED'
 } as const
 
 export const BILL_STATUS = {
@@ -20,4 +23,10 @@ export const BILL_STATUS = {
 export const PAYMENT_PREFERENCE = {
     MANUAL: 'MANUAL',
     AUTO: 'AUTO'
+} as const
+
+export const ANNOUNCEMENT_TYPES = {
+    INFO: 'INFO',
+    WARNING: 'WARNING',
+    PROMO: 'PROMO'
 } as const

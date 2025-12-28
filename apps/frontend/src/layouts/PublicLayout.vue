@@ -1,55 +1,54 @@
-
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import ThemeToggle from '@/components/ThemeToggle.vue';
-import Footer from '@/components/Footer.vue';
-import Toaster from '@/components/ui/Toaster.vue';
-import AppLogo from '@/components/AppLogo.vue';
+import Footer from '@/components/Footer.vue'
+import Header from '@/components/Header.vue'
+import AppLogo from '@/components/AppLogo.vue'
+import Button from '@/components/ui/Button.vue'
+import { LayoutDashboard } from 'lucide-vue-next'
+import { useRoute, useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 
-const appSettings = ref({
-    appTitle: 'NetMeter',
-    appSubtitle: '',
-    adminPhoneNumber: ''
-});
+import { usePublicStore } from '@/stores/public'
 
-onMounted(async () => {
-    try {
-        const res = await fetch('/api/public/settings');
-        if (res.ok) {
-            const data = await res.json();
-            appSettings.value = {
-                appTitle: data.appTitle || 'NetMeter',
-                appSubtitle: data.appSubtitle || '',
-                adminPhoneNumber: data.adminPhoneNumber || ''
-            };
-        }
-    } catch (e) {
-        console.error('Failed to load settings', e);
-    }
-});
+const route = useRoute()
+const router = useRouter()
+const authStore = useAuthStore()
+const publicStore = usePublicStore()
+const isLoggedIn = computed(() => authStore.isAuthenticated)
+const settings = computed(() => publicStore.settings || {})
 </script>
 
 <template>
-    <div class="min-h-screen bg-background flex flex-col font-sans">
-        <!-- Header -->
-        <header class="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border px-4 py-3">
-            <div class="container mx-auto flex justify-between items-center">
-                <div>
-                    <AppLogo :title="appSettings.appTitle" :subtitle="appSettings.appSubtitle" />
-                </div>
-                 <div class="flex gap-2 items-center">
-                    <ThemeToggle />
-                </div>
-            </div>
-        </header>
-
-        <!-- Main Content -->
-        <main class="flex-1 container mx-auto px-4 py-8 max-w-2xl">
-            <slot />
-        </main>
-
-
-        <Footer />
-        <Toaster />
+  <div class="min-h-screen bg-slate-50 dark:bg-[#020817] flex flex-col relative overflow-hidden">
+    <!-- Decorative background elements -->
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <div class="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-500/10 blur-[120px]"></div>
+        <div class="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] rounded-full bg-indigo-500/10 blur-[120px]"></div>
     </div>
+
+    <Header 
+        v-if="!route.meta.hideHeader"
+        class="z-10 bg-transparent border-none py-2"
+        :show-back="!!route.meta.showBack"
+        :back-to="String(route.meta.backTo || '')"
+    >
+        <template #title>
+             <AppLogo :title="settings && 'appTitle' in settings ? (settings.appTitle as string) : undefined" :subtitle="settings && 'appSubtitle' in settings ? (settings.appSubtitle as string) : undefined" />
+        </template>
+        <template #actions>
+            <Button v-if="isLoggedIn && route.name === 'home'" size="sm" variant="outline" @click="router.push('/dashboard')" class="shadow-sm">
+                <LayoutDashboard class="w-4 h-4 mr-2" />
+                Dashboard
+            </Button>
+        </template>
+    </Header>
+
+    <main class="flex-1 z-10 w-full px-4 py-4 md:py-8">
+        <div class="max-w-4xl mx-auto w-full">
+            <slot />
+        </div>
+    </main>
+
+    <Footer v-if="!route.meta.hideFooter" class="z-10" />
+  </div>
 </template>

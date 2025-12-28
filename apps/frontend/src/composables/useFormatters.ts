@@ -44,10 +44,18 @@ export const useFormatters = () => {
         return date.toLocaleString('id-ID', { month: 'long' })
     }
 
+    /**
+     * Format month number and year to Indonesian locale (e.g. Januari 2024)
+     */
+    const formatMonth = (month: number, year: number): string => {
+        return `${getMonthName(month)} ${year}`
+    }
+
     return {
         formatCurrency,
         formatDate,
         formatDateOnly,
-        getMonthName
+        getMonthName,
+        formatMonth
     }
 }

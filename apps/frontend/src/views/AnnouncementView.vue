@@ -1,175 +1,3 @@
-<template>
-  <div class="min-h-screen bg-background pb-20 md:pb-6 flex">
-    <!-- Desktop Sidebar -->
-    <AdminSidebar />
-
-    <!-- Main Content Area -->
-    <div class="flex-1 flex flex-col md:ml-64 transition-all duration-300 min-w-0 overflow-x-hidden">
-        <Header 
-            title="Pengumuman" 
-            subtitle="Kelola pengumuman di halaman utama"
-            :show-back="true"
-        />
-
-        <main class="container mx-auto px-4 py-6 md:max-w-4xl space-y-6 w-full">
-            <!-- Preview Card -->
-            <Card v-if="form.announcementActive">
-                <CardHeader class="border-b bg-muted/20 pb-4">
-                    <CardTitle class="text-sm">Preview</CardTitle>
-                </CardHeader>
-                <CardContent class="pt-6">
-                    <AnnouncementBanner 
-                        :active="true"
-                        :title="form.announcementTitle || 'Pengumuman'"
-                        :message="form.announcementMessage || 'Isi pengumuman akan muncul di sini...'"
-                        :type="form.announcementType"
-                        :created-at="form.announcementCreatedAt"
-                        :updated-at="form.announcementUpdatedAt"
-                    />
-                </CardContent>
-            </Card>
-
-            <!-- Editor Card -->
-            <Card>
-                <CardHeader class="border-b bg-muted/20 pb-4">
-                    <CardTitle>Pengaturan Pengumuman</CardTitle>
-                </CardHeader>
-                <CardContent class="pt-6 space-y-6">
-                    <!-- Toggle -->
-                    <div class="flex items-center justify-between p-4 bg-secondary/30 rounded-lg border border-border">
-                        <div>
-                            <h3 class="font-medium">Tampilkan Pengumuman</h3>
-                            <p class="text-xs text-muted-foreground mt-0.5">Aktifkan untuk menampilkan pengumuman di halaman utama</p>
-                        </div>
-                        <Switch 
-                            :checked="form.announcementActive" 
-                            @update:checked="val => form.announcementActive = val"
-                        />
-                    </div>
-
-                    <div v-if="form.announcementActive" class="space-y-6 animate-in fade-in slide-in-from-top-2">
-                        <!-- Title -->
-                        <div class="space-y-2">
-                            <Label for="title">Judul Pengumuman</Label>
-                            <Input 
-                                id="title" 
-                                v-model="form.announcementTitle" 
-                                placeholder="Contoh: Pengumuman Penting" 
-                            />
-                        </div>
-
-                        <!-- Type -->
-                        <div class="space-y-2">
-                            <Label for="type">Tipe / Warna</Label>
-                            <select 
-                                id="type" 
-                                v-model="form.announcementType"
-                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                <option value="INFO">Info (Biru) - Berita Umum</option>
-                                <option value="SUCCESS">Success (Hijau) - Kabar Baik</option>
-                                <option value="WARNING">Warning (Kuning) - Peringatan</option>
-                                <option value="DANGER">Danger (Merah) - Masalah Kritis/Maintenance</option>
-                            </select>
-                        </div>
-
-                        <!-- Rich Text Editor -->
-                        <div class="space-y-2">
-                            <Label>Isi Pengumuman</Label>
-                            
-                            <!-- Toolbar -->
-                            <div v-if="editor" class="border border-input rounded-t-md bg-secondary/30 p-2 flex flex-wrap gap-1">
-                                <button
-                                    @click="editor.chain().focus().toggleBold().run()"
-                                    :class="{ 'bg-primary text-primary-foreground': editor.isActive('bold') }"
-                                    class="px-3 py-1.5 rounded text-sm font-medium hover:bg-secondary transition-colors"
-                                    type="button"
-                                >
-                                    <strong>B</strong>
-                                </button>
-                                <button
-                                    @click="editor.chain().focus().toggleItalic().run()"
-                                    :class="{ 'bg-primary text-primary-foreground': editor.isActive('italic') }"
-                                    class="px-3 py-1.5 rounded text-sm font-medium hover:bg-secondary transition-colors italic"
-                                    type="button"
-                                >
-                                    I
-                                </button>
-                                <Button
-                                    @click="editor.chain().focus().toggleStrike().run()"
-                                    variant="ghost"
-                                    size="sm"
-                                    :class="{ 'bg-primary text-primary-foreground': editor.isActive('strike') }"
-                                    class="px-3 rounded text-sm font-medium hover:bg-secondary transition-colors line-through"
-                                    type="button"
-                                >
-                                    S
-                                </Button>
-                                <div class="w-px h-6 bg-border my-auto"></div>
-                                <button
-                                    @click="editor.chain().focus().toggleBulletList().run()"
-                                    :class="{ 'bg-primary text-primary-foreground': editor.isActive('bulletList') }"
-                                    class="px-3 py-1.5 rounded text-sm font-medium hover:bg-secondary transition-colors"
-                                    type="button"
-                                >
-                                    • List
-                                </button>
-                                <button
-                                    @click="editor.chain().focus().toggleOrderedList().run()"
-                                    :class="{ 'bg-primary text-primary-foreground': editor.isActive('orderedList') }"
-                                    class="px-3 py-1.5 rounded text-sm font-medium hover:bg-secondary transition-colors"
-                                    type="button"
-                                >
-                                    1. List
-                                </button>
-                                <div class="w-px h-6 bg-border my-auto"></div>
-                                <button
-                                    @click="setLink"
-                                    :class="{ 'bg-primary text-primary-foreground': editor.isActive('link') }"
-                                    class="px-3 py-1.5 rounded text-sm font-medium hover:bg-secondary transition-colors"
-                                    title="Tambah Link"
-                                    type="button"
-                                >
-                                    <LinkIcon class="w-4 h-4" />
-                                </button>
-                                <button
-                                    v-if="editor.isActive('link')"
-                                    @click="editor.chain().focus().unsetLink().run()"
-                                    class="px-3 py-1.5 rounded text-sm font-medium hover:bg-secondary transition-colors text-destructive"
-                                    title="Hapus Link"
-                                    type="button"
-                                >
-                                    <Link2Off class="w-4 h-4" />
-                                </button>
-                            </div>
-
-                            <!-- Editor Content -->
-                            <EditorContent 
-                                :editor="editor" 
-                                class="prose prose-sm max-w-none dark:prose-invert border border-input rounded-b-md p-4 min-h-[200px] bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
-                            />
-                            <p class="text-xs text-muted-foreground">
-                                Gunakan toolbar di atas untuk memformat teks. Mendukung bold, italic, dan list.
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Save Button -->
-                    <div class="pt-6 border-t border-border">
-                        <Button class="w-full sm:w-auto" @click="saveAnnouncement" :disabled="loading">
-                            <Save class="w-4 h-4 mr-2" />
-                            <span v-if="loading">Menyimpan...</span>
-                            <span v-else>Simpan Pengumuman</span>
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
-        </main>
-        <Footer />
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
@@ -185,12 +13,10 @@ import CardContent from '@/components/ui/CardContent.vue'
 import Button from '@/components/ui/Button.vue'
 import Input from '@/components/ui/Input.vue'
 import Label from '@/components/ui/Label.vue'
-import Header from '@/components/Header.vue'
-import AdminSidebar from '@/components/AdminSidebar.vue'
-import Footer from '@/components/Footer.vue'
 import AnnouncementBanner from '@/components/AnnouncementBanner.vue'
 import { useToast } from '@/composables/useToast'
 import { useSettingsStore } from '@/stores/settings'
+import { ANNOUNCEMENT_TYPES } from '@/utils/constants'
 import type { UpdateSettingsDTO } from '@/types'
 
 const { toast } = useToast()
@@ -200,7 +26,7 @@ const loading = ref(false)
 const form = ref<UpdateSettingsDTO>({
   announcementTitle: 'Pengumuman',
   announcementMessage: '',
-  announcementType: 'INFO',
+  announcementType: ANNOUNCEMENT_TYPES.INFO,
   announcementActive: false,
 })
 
@@ -250,7 +76,7 @@ const fetchSettings = async () => {
   if (data) {
     form.value.announcementTitle = data.announcementTitle || 'Pengumuman'
     form.value.announcementMessage = data.announcementMessage || ''
-    form.value.announcementType = data.announcementType || 'INFO'
+    form.value.announcementType = data.announcementType || ANNOUNCEMENT_TYPES.INFO
     form.value.announcementActive = data.announcementActive || false
     
     // Update editor content
@@ -296,6 +122,163 @@ onBeforeUnmount(() => {
   }
 })
 </script>
+
+<template>
+  <div class="max-w-4xl space-y-6">
+    <!-- Preview Card -->
+    <Card v-if="form.announcementActive">
+        <CardHeader class="border-b bg-muted/20 pb-4">
+            <CardTitle class="text-sm">Preview</CardTitle>
+        </CardHeader>
+        <CardContent class="pt-6">
+            <AnnouncementBanner 
+                :active="true"
+                :title="form.announcementTitle || 'Pengumuman'"
+                :message="form.announcementMessage || 'Isi pengumuman akan muncul di sini...'"
+                :type="form.announcementType"
+                :created-at="settingsStore.settings?.announcementCreatedAt"
+                :updated-at="settingsStore.settings?.announcementUpdatedAt"
+            />
+        </CardContent>
+    </Card>
+
+    <!-- Editor Card -->
+    <Card>
+        <CardHeader class="border-b bg-muted/20 pb-4">
+            <CardTitle>Pengaturan Pengumuman</CardTitle>
+        </CardHeader>
+        <CardContent class="pt-6 space-y-6">
+            <!-- Toggle -->
+            <div class="flex items-center justify-between p-4 bg-secondary/30 rounded-lg border border-border">
+                <div>
+                    <h3 class="font-medium">Tampilkan Pengumuman</h3>
+                    <p class="text-xs text-muted-foreground mt-0.5">Aktifkan untuk menampilkan pengumuman di halaman utama</p>
+                </div>
+                <Switch 
+                    :checked="form.announcementActive" 
+                    @update:checked="val => form.announcementActive = val"
+                />
+            </div>
+
+            <div v-if="form.announcementActive" class="space-y-6 animate-in fade-in slide-in-from-top-2">
+                <!-- Title -->
+                <div class="space-y-2">
+                    <Label for="title">Judul Pengumuman</Label>
+                    <Input 
+                        id="title" 
+                        v-model="form.announcementTitle" 
+                        placeholder="Contoh: Pengumuman Penting" 
+                    />
+                </div>
+
+                <!-- Type -->
+                <div class="space-y-2">
+                    <Label for="type">Tipe / Warna</Label>
+                    <select 
+                        id="type" 
+                        v-model="form.announcementType"
+                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        <option :value="ANNOUNCEMENT_TYPES.INFO">Info (Biru) - Berita Umum</option>
+                        <option :value="ANNOUNCEMENT_TYPES.SUCCESS">Success (Hijau) - Kabar Baik</option>
+                        <option :value="ANNOUNCEMENT_TYPES.WARNING">Warning (Kuning) - Peringatan</option>
+                        <option :value="ANNOUNCEMENT_TYPES.DANGER">Danger (Merah) - Masalah Kritis/Maintenance</option>
+                    </select>
+                </div>
+
+                <!-- Rich Text Editor -->
+                <div class="space-y-2">
+                    <Label>Isi Pengumuman</Label>
+                    
+                    <!-- Toolbar -->
+                    <div v-if="editor" class="border border-input rounded-t-md bg-secondary/30 p-2 flex flex-wrap gap-1">
+                        <button
+                            @click="editor.chain().focus().toggleBold().run()"
+                            :class="{ 'bg-primary text-primary-foreground': editor.isActive('bold') }"
+                            class="px-3 py-1.5 rounded text-sm font-medium hover:bg-secondary transition-colors"
+                            type="button"
+                        >
+                            <strong>B</strong>
+                        </button>
+                        <button
+                            @click="editor.chain().focus().toggleItalic().run()"
+                            :class="{ 'bg-primary text-primary-foreground': editor.isActive('italic') }"
+                            class="px-3 py-1.5 rounded text-sm font-medium hover:bg-secondary transition-colors italic"
+                            type="button"
+                        >
+                            I
+                        </button>
+                        <Button
+                            @click="editor.chain().focus().toggleStrike().run()"
+                            variant="ghost"
+                            size="sm"
+                            :class="{ 'bg-primary text-primary-foreground': editor.isActive('strike') }"
+                            class="px-3 rounded text-sm font-medium hover:bg-secondary transition-colors line-through"
+                            type="button"
+                        >
+                            S
+                        </Button>
+                        <div class="w-px h-6 bg-border my-auto"></div>
+                        <button
+                            @click="editor.chain().focus().toggleBulletList().run()"
+                            :class="{ 'bg-primary text-primary-foreground': editor.isActive('bulletList') }"
+                            class="px-3 py-1.5 rounded text-sm font-medium hover:bg-secondary transition-colors"
+                            type="button"
+                        >
+                            • List
+                        </button>
+                        <button
+                            @click="editor.chain().focus().toggleOrderedList().run()"
+                            :class="{ 'bg-primary text-primary-foreground': editor.isActive('orderedList') }"
+                            class="px-3 py-1.5 rounded text-sm font-medium hover:bg-secondary transition-colors"
+                            type="button"
+                        >
+                            1. List
+                        </button>
+                        <div class="w-px h-6 bg-border my-auto"></div>
+                        <button
+                            @click="setLink"
+                            :class="{ 'bg-primary text-primary-foreground': editor.isActive('link') }"
+                            class="px-3 py-1.5 rounded text-sm font-medium hover:bg-secondary transition-colors"
+                            title="Tambah Link"
+                            type="button"
+                        >
+                            <LinkIcon class="w-4 h-4" />
+                        </button>
+                        <button
+                            v-if="editor.isActive('link')"
+                            @click="editor.chain().focus().unsetLink().run()"
+                            class="px-3 py-1.5 rounded text-sm font-medium hover:bg-secondary transition-colors text-destructive"
+                            title="Hapus Link"
+                            type="button"
+                        >
+                            <Link2Off class="w-4 h-4" />
+                        </button>
+                    </div>
+
+                    <!-- Editor Content -->
+                    <EditorContent 
+                        :editor="editor" 
+                        class="prose prose-sm max-w-none dark:prose-invert border border-input rounded-b-md p-4 min-h-[200px] bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+                    />
+                    <p class="text-xs text-muted-foreground">
+                        Gunakan toolbar di atas untuk memformat teks. Mendukung bold, italic, dan list.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <div class="pt-6 border-t border-border">
+                <Button class="w-full sm:w-auto" @click="saveAnnouncement" :disabled="loading">
+                    <Save class="w-4 h-4 mr-2" />
+                    <span v-if="loading">Menyimpan...</span>
+                    <span v-else>Simpan Pengumuman</span>
+                </Button>
+            </div>
+        </CardContent>
+    </Card>
+  </div>
+</template>
 
 <style>
 /* Tiptap Editor Styles */

@@ -9,7 +9,9 @@ import CardTitle from '@/components/ui/CardTitle.vue'
 import CardContent from '@/components/ui/CardContent.vue'
 import Input from '@/components/ui/Input.vue'
 import Label from '@/components/ui/Label.vue'
-import Header from '@/components/Header.vue'
+import Alert from '@/components/ui/Alert.vue'
+import AlertTitle from '@/components/ui/AlertTitle.vue'
+import AlertDescription from '@/components/ui/AlertDescription.vue'
 
 import { useAuthStore } from '@/stores/auth'
 
@@ -56,17 +58,8 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50 dark:bg-[#020817] flex flex-col relative overflow-hidden">
-    <!-- Decorative background elements -->
-    <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-        <div class="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-500/10 blur-[120px]"></div>
-        <div class="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] rounded-full bg-indigo-500/10 blur-[120px]"></div>
-    </div>
-
-    <Header title="NetMeter" :show-back="true" back-to="/" class="z-10 bg-transparent border-none py-2" />
-
-    <main class="flex-1 flex items-center justify-center container mx-auto px-4 py-6 z-10">
-        <div class="w-full max-w-sm animate-in fade-in zoom-in duration-500">
+  <div class="flex items-center justify-center py-6">
+    <div class="w-full max-w-sm animate-in fade-in zoom-in duration-500">
             <Card class="border-border/40 shadow-2xl shadow-blue-500/5 backdrop-blur-sm bg-card/80 rounded-[2rem] overflow-hidden">
                 <div class="h-1.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600"></div>
 
@@ -80,17 +73,21 @@ const handleLogin = async () => {
 
                 <CardContent class="px-7 pb-8 space-y-5">
                     <!-- Admin Only Note -->
-                    <div class="p-3 bg-blue-500/5 border border-blue-500/10 rounded-xl flex gap-2.5 items-center animate-in slide-in-from-top-2 duration-500">
-                        <Info class="w-4 h-4 text-blue-500 shrink-0" />
-                        <p class="text-[10px] text-blue-700/80 dark:text-blue-400/80 leading-tight font-bold tracking-tight">
-                            Khusus Admin: Halaman ini hanya untuk manajemen sistem.
-                        </p>
-                    </div>
+                    <Alert variant="info" class="animate-in slide-in-from-top-2 duration-500">
+                        <Info class="w-4 h-4" />
+                        <AlertTitle class="text-[10px] uppercase font-black tracking-widest">Admin Only</AlertTitle>
+                        <AlertDescription class="text-[10px] leading-tight font-bold opacity-80">
+                            Halaman ini hanya untuk manajemen sistem.
+                        </AlertDescription>
+                    </Alert>
 
-                    <div v-if="error" class="p-3 bg-red-500/10 text-red-600 dark:text-red-400 text-xs rounded-xl border border-red-500/20 animate-in shake duration-300 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
-                        {{ error }}
-                    </div>
+                    <Alert v-if="error" variant="destructive" class="animate-in shake duration-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                        <AlertTitle class="text-[10px] uppercase font-black tracking-widest">Error</AlertTitle>
+                        <AlertDescription class="text-[10px] leading-tight font-bold opacity-80">
+                            {{ error }}
+                        </AlertDescription>
+                    </Alert>
 
                     <div class="space-y-3.5">
                         <div class="space-y-1.5">
@@ -134,11 +131,6 @@ const handleLogin = async () => {
                     </div>
                 </CardContent>
             </Card>
-
-            <p class="text-center text-[10px] text-muted-foreground mt-6 font-bold uppercase tracking-widest opacity-50">
-                &copy; {{ new Date().getFullYear() }} NeflaLabs
-            </p>
         </div>
-    </main>
-  </div>
+    </div>
 </template>

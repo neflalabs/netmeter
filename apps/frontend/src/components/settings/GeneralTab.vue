@@ -14,7 +14,7 @@
 
             <div class="space-y-2">
                 <Label for="appUrl">App URL / Public Domain</Label>
-                <Input id="appUrl" v-model="form.appUrl" placeholder="https://net.home.npx.my.id" />
+                <Input id="appUrl" v-model="form.appUrl" placeholder="https://your.url.com" />
                 <p class="text-[10px] text-muted-foreground">
                     Public URL. For generate link WhatsApp and Webhook.
                 </p>
