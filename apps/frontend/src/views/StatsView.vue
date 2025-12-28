@@ -11,11 +11,8 @@ const activeTab = ref<'FINANCIAL' | 'BEHAVIOR'>('FINANCIAL')
 </script>
 
 <template>
-  <div class="max-w-4xl space-y-6">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h2 class="text-2xl font-bold tracking-tight">Statistik & Laporan</h2>
-    </div>
-
+  <div class="space-y-6">
+   
     <Tabs v-model:model-value="activeTab" class="w-full">
       <div class="flex flex-col items-center">
         <TabsList class="grid w-full grid-cols-2 max-w-md mb-8">

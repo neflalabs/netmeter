@@ -124,7 +124,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="max-w-4xl space-y-6">
+  <div class="space-y-6">
     <!-- Preview Card -->
     <Card v-if="form.announcementActive">
         <CardHeader class="border-b bg-muted/20 pb-4">
