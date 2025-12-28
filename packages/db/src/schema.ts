@@ -44,19 +44,19 @@ export const settings = sqliteTable('settings', {
     announcementCreatedAt: integer('announcement_created_at', { mode: 'timestamp' }),
     announcementUpdatedAt: integer('announcement_updated_at', { mode: 'timestamp' }),
 
-    billTemplate: text('bill_template').default('Assalamualaikum {name}, patungan bulan {month} / {year} sebesar Rp. {amount} sudah bisa dibayar.{br} Untuk membayar secara otomatis, klik di sini: {link} {br}{br} _Pesan ini dikirim otomatis oleh aplikasi._'),
-    paymentTemplate: text('payment_template').default('Assalamualaikum {name}, patungan sebesar Rp. {amount} via {method} sudah diterima. detailnya bisa cek disini : {link} {br} Maturnuwun! {br}{br} _Pesan ini dikirim otomatis oleh aplikasi._'),
-    reminderTemplate: text('reminder_template').default('Assalamualaikum {name}, sekadar mengingatkan patungan WiFi bulan {month} / {year} sebesar Rp. {amount} belum lunas. Jika sudah bayar, abaikan pesan ini: {link} {br}{br} _Pesan ini dikirim otomatis oleh aplikasi._'),
+    billTemplate: text('bill_template'),
+    paymentTemplate: text('payment_template'),
+    reminderTemplate: text('reminder_template'),
 
     // Global Notification Config
     globalDueDay: integer('global_due_day').default(10), // Default day 10
     globalReminderInterval: integer('global_reminder_interval').default(3), // Every 3 days
 
     waEnabled: integer('wa_enabled', { mode: 'boolean' }).default(false),
-    waServiceUrl: text('wa_service_url').default('http://localhost:3030/api/v1'), // Default URL
-    waApiKey: text('wa_api_key').default(''), // Default empty
+    waServiceUrl: text('wa_service_url'), // Default URL
+    waApiKey: text('wa_api_key'), // Default empty
     waInstanceId: text('wa_instance_id').default(''), // Default instance
-    waWebhookSecret: text('wa_webhook_secret').default(''), // Secret for webhook verification
+    waWebhookSecret: text('wa_webhook_secret'), // Secret for webhook verification
     autoNotifyNewBill: integer('auto_notify_new_bill', { mode: 'boolean' }).default(false),
     autoNotifyPaymentSuccess: integer('auto_notify_payment_success', { mode: 'boolean' }).default(false),
     autoReminderEnabled: integer('auto_reminder_enabled', { mode: 'boolean' }).default(false),
@@ -72,7 +72,7 @@ export const settings = sqliteTable('settings', {
     manualPaymentEnabled: integer('manual_payment_enabled', { mode: 'boolean' }).default(true),
     qrisPaymentEnabled: integer('qris_payment_enabled', { mode: 'boolean' }).default(false),
     manualPaymentDetails: text('manual_payment_details').default('Pembayaran Tunai masih selalu diterima selama menghubungi admin.'), // Bank details etc.
-    qrisRawString: text('qris_raw_string').default('00020101021126610014COM.GO-JEK.WWW01189360091439280284540210G9280284540303UMI51440014ID.CO.QRIS.WWW0215ID10253777680290303UMI5204553353033605802ID5910NEFLA LABS6006SORONG61059844562070703A0163044598'), // Raw QRIS string for dynamic injection
+    qrisRawString: text('qris_raw_string'), // Raw QRIS string for dynamic injection
 
     // Midtrans Configuration
     midtransEnabled: integer('midtrans_enabled', { mode: 'boolean' }).default(false),

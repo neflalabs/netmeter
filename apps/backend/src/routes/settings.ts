@@ -11,6 +11,16 @@ const app = new Hono();
 
 import QRCode from 'qrcode';
 
+const DEFAULT_SETTINGS = {
+    billTemplate: process.env.BILL_TEMPLATE,
+    paymentTemplate: process.env.PAYMENT_TEMPLATE,
+    reminderTemplate: process.env.REMINDER_TEMPLATE,
+    waServiceUrl: process.env.WA_SERVICE_URL,
+    waApiKey: process.env.WA_API_KEY,
+    waWebhookSecret: process.env.WA_WEBHOOK_SECRET,
+    qrisRawString: process.env.QRIS_RAW_STRING,
+};
+
 // Preview QRIS String
 app.post('/preview-qris', async (c) => {
     try {
@@ -19,7 +29,7 @@ app.post('/preview-qris', async (c) => {
 
         const qrImage = await QRCode.toBuffer(content, {
             type: 'png',
-            width: 300,
+            width: 500,
             margin: 2,
             errorCorrectionLevel: 'M'
         });
@@ -38,7 +48,10 @@ app.get('/', async (c) => {
         const storedSettings = await db.select().from(settings).limit(1);
         if (storedSettings.length === 0) {
             // Auto-seed default settings with singleton pattern
-            const newSettings = await db.insert(settings).values({ singleton: 1 }).returning();
+            const newSettings = await db.insert(settings).values({
+                singleton: 1,
+                ...DEFAULT_SETTINGS
+            }).returning();
             return c.json(newSettings[0]);
         }
         return c.json(storedSettings[0]);
@@ -91,6 +104,7 @@ app.put('/', zValidator('json', settingsSchema), async (c) => {
             // Create first record
             const newSettings = await db.insert(settings).values({
                 singleton: 1, // Singleton pattern
+                ...DEFAULT_SETTINGS,
                 ...values,
             }).returning();
             console.log('[Settings] Created new settings:', newSettings[0]);
