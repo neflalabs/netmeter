@@ -55,78 +55,85 @@ app.post('/', async (c) => {
             }
         }
 
-        // console.log('[Webhook] Received:', JSON.stringify(payload, null, 2));
+        const { event, instance_id, data } = payload;
 
-        // --- Extract Message Data (Support both direct and wrapped formats) ---
-        const msgInfo = payload.Info || payload.data?.Info;
-        const msgMessage = payload.Message || payload.data?.Message;
+        if (event === 'message.received') {
+            // INI PESAN MASUK
+            // "Orang lain kirim pesan ke WA kita"
+            const msgInfo = data?.Info || payload.Info || payload.data?.Info; // Fallbacks just in case
+            const msgMessage = data?.Message || payload.Message || payload.data?.Message;
 
-        // --- Handle Incoming Messages ---
-        if (msgInfo && msgMessage) {
-            // Prefer SenderAlt or Sender from MessageSource if available (often contains standard JID)
-            const rawSender = msgInfo.SenderAlt || msgInfo.MessageSource?.Sender || msgInfo.RemoteJid || '';
-            const pushName = msgInfo.PushName || 'Unknown';
-            const messageId = msgInfo.ID;
-            const text = extractMessageText(msgMessage);
-            const isFromMe = msgInfo.MessageSource?.IsFromMe || false;
+            if (msgInfo && msgMessage) {
+                // Prefer SenderAlt or Sender from MessageSource if available
+                const rawSender = msgInfo.SenderAlt || msgInfo.MessageSource?.Sender || msgInfo.RemoteJid || '';
+                const pushName = msgInfo.PushName || 'Unknown';
+                const messageId = msgInfo.ID;
+                const text = extractMessageText(msgMessage);
+                const isFromMe = msgInfo.MessageSource?.IsFromMe || false;
 
-            // If it's from me, it's an outgoing message echo, usually we skip it 
-            if (isFromMe) {
-                return c.json({ success: true, message: 'Echo ignored' });
+                // If it's from me, it's an outgoing message echo, usually we skip it 
+                if (isFromMe) {
+                    return c.json({ success: true, message: 'Echo ignored' });
+                }
+
+                // Extract digits only for the phone number part
+                const phoneNumber = rawSender.split('@')[0].split(':')[0];
+
+                console.log(`[Webhook] 📩 Incoming Message from ${pushName} (${phoneNumber}): ${text.substring(0, 50)}${text.length > 50 ? '...' : ''}`);
+
+                // Try to find user
+                const cleanPhone = phoneNumber.startsWith('62') ? phoneNumber.substring(2) : (phoneNumber.startsWith('0') ? phoneNumber.substring(1) : phoneNumber);
+
+                const user = await db.select()
+                    .from(users)
+                    .where(or(
+                        eq(users.whatsapp, phoneNumber),
+                        eq(users.whatsapp, `0${cleanPhone}`),
+                        eq(users.whatsapp, `62${cleanPhone}`),
+                        like(users.whatsapp, `%${cleanPhone}`)
+                    ))
+                    .limit(1);
+
+                const userId = user.length > 0 ? user[0].id : null;
+
+                // Save to DB
+                await db.insert(whatsappLogs).values({
+                    recipient: phoneNumber,
+                    userId: userId,
+                    message: text,
+                    type: 'INCOMING',
+                    status: 'DELIVERED', // We received it
+                    waMessageId: messageId,
+                    createdAt: new Date()
+                });
+
+                // Lakukan auto-reply di sini... (Placeholder as per user request)
+
+                return c.json({
+                    success: true,
+                    message: 'Message received and saved',
+                    details: {
+                        from: rawSender,
+                        phone: phoneNumber,
+                        id: messageId
+                    }
+                });
+            } else {
+                console.warn('[Webhook] message.received event but missing Info/Message data');
+                return c.json({ success: false, message: 'Missing Info/Message data' }, 400);
             }
 
-            // Extract digits only for the phone number part (handle :xx device IDs and @s.whatsapp.net)
-            const phoneNumber = rawSender.split('@')[0].split(':')[0];
+        } else if (event === 'message.status' || event === 'message_status') {
+            // INI UPDATE STATUS CENTANG
+            // "Pesan yang KITA kirim, statusnya berubah"
+            // console.log(`Pesan ${data.id} ke ${data.to} berubah jadi: ${data.status}`);
+            // JANGAN auto-reply di sini! Cuma update status DB.
 
-            console.log(`[Webhook] 📩 Incoming Message from ${pushName} (${phoneNumber}): ${text.substring(0, 50)}${text.length > 50 ? '...' : ''}`);
+            const message_id = data?.id || data?.message_id || payload.message_id;
+            const status = data?.status || payload.status;
 
-            // Try to find user with robust matching (handle 62, 0, or just suffix)
-            const cleanPhone = phoneNumber.startsWith('62') ? phoneNumber.substring(2) : (phoneNumber.startsWith('0') ? phoneNumber.substring(1) : phoneNumber);
-
-            const user = await db.select()
-                .from(users)
-                .where(or(
-                    eq(users.whatsapp, phoneNumber),
-                    eq(users.whatsapp, `0${cleanPhone}`),
-                    eq(users.whatsapp, `62${cleanPhone}`),
-                    like(users.whatsapp, `%${cleanPhone}`)
-                ))
-                .limit(1);
-
-            const userId = user.length > 0 ? user[0].id : null;
-
-            // Save to DB
-            await db.insert(whatsappLogs).values({
-                recipient: phoneNumber,
-                userId: userId,
-                message: text,
-                type: 'INCOMING',
-                status: 'DELIVERED', // We received it
-                waMessageId: messageId,
-                createdAt: new Date()
-            });
-
-            return c.json({
-                success: true,
-                message: 'Message received and saved',
-                details: {
-                    from: rawSender,
-                    phone: phoneNumber,
-                    id: messageId
-                }
-            });
-        }
-
-        // --- Handle Status Updates (Original Format) ---
-        // Validate basic structure for status events
-        if (payload.event) {
-            // Handle message status updates
-            if (payload.event === 'message.status' || payload.event === 'message_status') {
-                const { message_id, status } = payload;
-
-                if (!message_id || !status) {
-                    return c.json({ error: 'Missing message_id or status' }, 400);
-                }
+            if (message_id && status) {
+                console.log(`[Webhook] 📝 Status Update: ${message_id} -> ${status}`);
 
                 // Find the log entry
                 const logs = await db.select()
@@ -162,16 +169,21 @@ app.post('/', async (c) => {
                     message_id,
                     new_status: newStatus
                 });
+            } else {
+                return c.json({ error: 'Missing message_id or status' }, 400);
             }
 
-            // Unknown event type
-            console.warn('[Webhook] Unknown event type:', payload.event);
-            return c.json({ success: true, message: 'Event received but not processed' });
+        } else if (event === 'connection.update') {
+            // Status login berubah
+            const status = data?.status || 'unknown';
+            console.log(`[Webhook] 🔌 Instance ${instance_id} status: ${status}`);
+            return c.json({ success: true, message: 'Connection update processed' });
         }
 
-        // --- Unknown Format ---
-        console.warn('[Webhook] Unknown payload format:', Object.keys(payload));
-        return c.json({ error: 'Unknown payload format' }, 400);
+        // --- Unknown/Unhandled Events ---
+        // If it's not one of the above, we just log it and return success to avoid retries
+        console.log('[Webhook] Unhandled event:', event);
+        return c.json({ success: true, message: 'Event received' });
 
     } catch (e: any) {
         console.error('[Webhook] Error processing webhook:', e);
