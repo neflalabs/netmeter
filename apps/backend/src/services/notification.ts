@@ -190,6 +190,7 @@ export class NotificationService {
             // Map CASH/MANUAL_TRANSFER to something nicer if needed
             if (method === 'CASH') return 'Tunai';
             if (method === 'MANUAL_TRANSFER') return 'Transfer Manual';
+            if (method === 'STATIC_QRIS') return 'Static QRIS';
             return method;
         }
 

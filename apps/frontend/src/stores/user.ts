@@ -10,32 +10,35 @@ export const useUserStore = defineStore('user', () => {
     const users = ref<User[]>([])
     const isFetching = ref(false)
     const lastUpdated = ref<number | null>(null)
+    const pagination = ref({
+        total: 0,
+        totalPages: 0,
+        page: 1,
+        limit: 5
+    })
 
     // Actions
-    async function fetchUsers(force = false, includeDeleted = true) {
+    async function fetchUsers(force = false, includeDeleted = true, page = pagination.value.page, limit = pagination.value.limit) {
         const now = Date.now()
         const isStale = !lastUpdated.value || (now - lastUpdated.value > 5 * 60 * 1000)
 
-        // If data is available and not forced, return immediately
-        if (!force && users.value.length > 0 && !isStale) {
-            return users.value
-        }
-
-        // SWR: If we have data but it's stale, fetch in background without showing loader
-        if (users.value.length > 0 && isStale) {
-            api.getAll({ includeDeleted }).then(data => {
-                users.value = data
-                lastUpdated.value = Date.now()
-            })
+        // If data is available and not forced and not stale, return immediately
+        if (!force && users.value.length > 0 && !isStale && pagination.value.page === page && pagination.value.limit === limit) {
             return users.value
         }
 
         isFetching.value = true
         try {
-            const data = await api.getAll({ includeDeleted })
-            users.value = data
+            const res = await api.getAll({ includeDeleted, page, limit })
+            users.value = res.data || []
+            pagination.value = {
+                total: res.pagination?.total || 0,
+                totalPages: res.pagination?.totalPages || 0,
+                page: res.pagination?.page || page,
+                limit: res.pagination?.limit || limit
+            }
             lastUpdated.value = Date.now()
-            return data
+            return users.value
         } finally {
             isFetching.value = false
         }
@@ -72,6 +75,7 @@ export const useUserStore = defineStore('user', () => {
         users,
         isFetching,
         lastUpdated,
+        pagination,
         fetchUsers,
         createUser,
         updateUser,

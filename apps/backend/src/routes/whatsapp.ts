@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { whatsappService } from '../services/whatsapp'
 import { db } from '../db'
 import { whatsappLogs, users } from '@netmeter/db'
-import { desc, eq, sql, and } from 'drizzle-orm'
+import { desc, eq, sql, and, ne } from 'drizzle-orm'
 import { zValidator } from '@hono/zod-validator'
 import { z } from 'zod'
 import { paginationSchema, whatsappSendSchema } from '@netmeter/shared'
@@ -10,7 +10,7 @@ import { paginationSchema, whatsappSendSchema } from '@netmeter/shared'
 const app = new Hono()
 
 const logsQuerySchema = paginationSchema.extend({
-    type: z.enum(['BILL', 'RECEIPT', 'REMINDER', 'INCOMING', 'OTHER']).optional(),
+    type: z.enum(['BILL', 'RECEIPT', 'REMINDER', 'INCOMING', 'OUTGOING', 'OTHER']).optional(),
 })
 
 app.get('/status', async (c) => {
@@ -61,7 +61,9 @@ app.get('/logs', zValidator('query', logsQuerySchema), async (c) => {
         const offset = (page - 1) * limit
 
         // Build where clause
-        const whereClause = type ? eq(whatsappLogs.type, type) : undefined
+        const whereClause = type === 'OUTGOING'
+            ? ne(whatsappLogs.type, 'INCOMING')
+            : (type ? eq(whatsappLogs.type, type as any) : undefined)
 
         // 1. Get total logs count for pagination
         const [totalCount] = await db.select({ count: sql<number>`count(*)` })

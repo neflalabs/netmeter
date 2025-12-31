@@ -11,46 +11,50 @@ export const useBillStore = defineStore('bill', () => {
     // State
     const bills = ref<Bill[]>([])
     const isFetching = ref(false)
-    const isBackgroundFetching = ref(false)
     const financialData = ref<any>(null)
     const lastUpdated = ref<number | null>(null)
+    const pagination = ref({
+        total: 0,
+        totalPages: 0,
+        page: 1,
+        limit: 5
+    })
 
     // Filters (Shared between views)
     const filters = ref({
         month: new Date().getMonth() + 1,
         year: new Date().getFullYear(),
-        status: 'ALL'
+        status: 'ALL',
+        userId: undefined as number | undefined
     })
 
     // Actions
-    async function fetchBills(force = false) {
+    async function fetchBills(force = false, page = pagination.value.page, limit = pagination.value.limit) {
         const now = Date.now()
         const isStale = !lastUpdated.value || (now - lastUpdated.value > 60 * 1000) // 1 minute stale
 
-        // If not forced and data is fresh, return cached
-        if (!force && bills.value.length > 0 && !isStale) {
-            return bills.value
-        }
-
-        // If we have data, show it but fetch new in background
-        if (bills.value.length > 0) {
-            isBackgroundFetching.value = true
-            api.getAll().then(data => {
-                bills.value = data
-                lastUpdated.value = Date.now()
-            }).finally(() => {
-                isBackgroundFetching.value = false
-            })
+        // If not forced and data is fresh and same page, return cached
+        if (!force && bills.value.length > 0 && !isStale && pagination.value.page === page && pagination.value.limit === limit) {
             return bills.value
         }
 
         // Fresh fetch
         isFetching.value = true
         try {
-            const data = await api.getAll()
-            bills.value = data
+            const res = await api.getAll({
+                userId: filters.value.userId,
+                page,
+                limit
+            })
+            bills.value = res.data || []
+            pagination.value = {
+                total: res.pagination?.total || 0,
+                totalPages: res.pagination?.totalPages || 0,
+                page: res.pagination?.page || page,
+                limit: res.pagination?.limit || limit
+            }
             lastUpdated.value = Date.now()
-            return data
+            return bills.value
         } finally {
             isFetching.value = false
         }
@@ -84,6 +88,7 @@ export const useBillStore = defineStore('bill', () => {
         filters,
         financialData,
         isFetching,
+        pagination,
         fetchBills,
         fetchFinancialStats,
         markAsPaid

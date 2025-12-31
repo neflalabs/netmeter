@@ -1,26 +1,48 @@
 import { Hono } from 'hono'
 import { db } from './db'
 import { users, bills, settings } from '@netmeter/db'
-import { eq, isNull, and } from 'drizzle-orm'
+import { eq, isNull, and, sql } from 'drizzle-orm'
 import { zValidator } from '@hono/zod-validator'
-import { userSchema, idParamSchema } from '@netmeter/shared'
+import { userSchema, idParamSchema, paginationSchema } from '@netmeter/shared'
 
 import { NotificationService } from './services/notification'
 
 const app = new Hono()
 
-app.get('/', async (c) => {
-    const includeDeleted = c.req.query('include_deleted') === 'true'
+app.get('/', zValidator('query', paginationSchema), async (c) => {
+    try {
+        const { page, limit } = c.req.valid('query')
+        const offset = (page - 1) * limit
+        const includeDeleted = c.req.query('include_deleted') === 'true'
 
-    // Only return non-deleted users unless include_deleted is true
-    const query = db.select().from(users)
+        // Base where clause
+        const whereClause = includeDeleted ? undefined : isNull(users.deletedAt)
 
-    if (!includeDeleted) {
-        query.where(isNull(users.deletedAt))
+        // 1. Get total count
+        const [totalCount] = await db.select({ count: sql<number>`count(*)` })
+            .from(users)
+            .where(whereClause)
+
+        // 2. Get paginated users
+        const allUsers = await db.select()
+            .from(users)
+            .where(whereClause)
+            .limit(limit)
+            .offset(offset)
+
+        return c.json({
+            data: allUsers,
+            pagination: {
+                page,
+                limit,
+                total: totalCount.count,
+                totalPages: Math.ceil(totalCount.count / limit)
+            }
+        })
+    } catch (e: any) {
+        console.error('Failed to fetch users:', e)
+        return c.json({ error: e.message }, 500)
     }
-
-    const allUsers = await query
-    return c.json(allUsers)
 })
 
 app.get('/:id', zValidator('param', idParamSchema), async (c) => {

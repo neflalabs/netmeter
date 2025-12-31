@@ -1,5 +1,5 @@
 import { useApi } from '@/composables/useApi'
-import type { Bill, GenerateBillsResponse } from '@/types'
+import type { GenerateBillsResponse } from '@/types'
 import { API_ENDPOINTS } from '@/utils/constants'
 
 /**
@@ -8,9 +8,14 @@ import { API_ENDPOINTS } from '@/utils/constants'
 export const billsApi = () => {
     const api = useApi()
 
-    const getAll = async (userId?: number): Promise<Bill[]> => {
-        const url = userId ? `${API_ENDPOINTS.BILLS}?userId=${userId}` : API_ENDPOINTS.BILLS
-        return api.get<Bill[]>(url)
+    const getAll = async (params?: { userId?: number, page?: number, limit?: number }): Promise<any> => {
+        const queryParams = new URLSearchParams()
+        if (params?.userId) queryParams.append('userId', params.userId.toString())
+        if (params?.page) queryParams.append('page', params.page.toString())
+        if (params?.limit) queryParams.append('limit', params.limit.toString())
+
+        const url = `${API_ENDPOINTS.BILLS}?${queryParams.toString()}`
+        return api.get<any>(url)
     }
 
     const generate = async (): Promise<GenerateBillsResponse> => {

@@ -24,6 +24,7 @@ import DropdownMenuContent from '@/components/ui/DropdownMenuContent.vue'
 import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue'
 import PaymentDialog from '@/components/ui/PaymentDialog.vue'
 import BillSettingsDialog from '@/components/bills/BillSettingsDialog.vue'
+import Pagination from '@/components/ui/Pagination.vue'
 
 const { formatCurrency, getMonthName } = useFormatters()
 const { toast } = useToast()
@@ -181,6 +182,20 @@ onMounted(() => {
         </div>
         
         <div class="flex items-center gap-2">
+             <!-- Page Size Selector -->
+             <div class="flex items-center gap-1.5 bg-secondary/20 h-9 px-3 rounded-xl border border-border/50">
+                <span class="text-[10px] font-bold text-muted-foreground uppercase">Show</span>
+                <select 
+                    :value="billStore.pagination.limit"
+                    @change="(e) => billStore.fetchBills(true, 1, parseInt((e.target as HTMLSelectElement).value))"
+                    class="bg-transparent text-xs font-bold text-primary focus:outline-none cursor-pointer"
+                >
+                    <option :value="5">5</option>
+                    <option :value="10">10</option>
+                    <option :value="20">20</option>
+                </select>
+            </div>
+
              <Button @click="isBillSettingsOpen = true" variant="ghost" size="icon" class="text-muted-foreground">
                 <Wallet class="w-4 h-4" />
             </Button>
@@ -231,17 +246,16 @@ onMounted(() => {
         </Card>
     </div>
 
-    <!-- Bills Table -->
     <Card>
-        <CardContent class="p-0">
-            <div v-if="billStore.isFetching && billStore.bills.length === 0" class="p-8 text-center text-muted-foreground">
+        <CardContent class="p-0 flex flex-col min-h-[400px]">
+            <div v-if="billStore.isFetching && billStore.bills.length === 0" class="flex-1 p-8 text-center text-muted-foreground flex items-center justify-center">
                 <div class="animate-pulse">Memuat data tagihan...</div>
             </div>
-            <div v-else-if="filteredBills.length === 0" class="p-8 text-center text-muted-foreground">
-                <Receipt class="w-12 h-12 mx-auto mb-2 opacity-20" />
+            <div v-else-if="filteredBills.length === 0" class="flex-1 p-8 text-center text-muted-foreground flex flex-col items-center justify-center gap-2">
+                <Receipt class="w-12 h-12 mx-auto opacity-20" />
                 <p>Tidak ada data tagihan ditemukan</p>
             </div>
-            <div v-else class="divide-y divide-border">
+            <div v-else class="flex-1 divide-y divide-border">
                 <div v-for="bill in filteredBills" :key="bill.id" class="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-secondary/50 transition-colors gap-3">
                     <div class="flex items-center gap-4">
                         <div 
@@ -289,7 +303,7 @@ onMounted(() => {
                                     class="gap-2"
                                 >
                                     <CheckCircle2 class="w-4 h-4 text-green-500" />
-                                    Tandai Lunas (Cash)
+                                    Tandai Lunas
                                 </DropdownMenuItem>
                                 <DropdownMenuItem 
                                     v-if="bill.status === 'PAID'"
@@ -303,6 +317,17 @@ onMounted(() => {
                         </DropdownMenu>
                     </div>
                 </div>
+            </div>
+
+            <!-- Pagination UI -->
+            <div v-if="billStore.pagination.total > 0" class="border-t border-border mt-auto bg-secondary/5">
+                <Pagination 
+                    :current-page="billStore.pagination.page"
+                    :total-pages="billStore.pagination.totalPages"
+                    :total="billStore.pagination.total"
+                    :limit="billStore.pagination.limit"
+                    @change="(page) => billStore.fetchBills(true, page)"
+                />
             </div>
         </CardContent>
     </Card>

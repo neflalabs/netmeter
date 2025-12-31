@@ -1,4 +1,4 @@
-# Common
+# # Common
 node_modules/
 dist/
 dist-ssr/
@@ -25,10 +25,6 @@ Thumbs.db
 bun.lockb
 bun.lock
 
-# Go (wa-bot)
-apps/wa-bot/whatsapp-bot
-apps/wa-bot/data/
-apps/wa-bot/vendor/
 
 # Database
 data/

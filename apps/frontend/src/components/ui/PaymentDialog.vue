@@ -25,6 +25,7 @@
                     >
                         <option value="CASH">Tunai (Cash)</option>
                         <option value="MANUAL_TRANSFER">Transfer Bank / E-Wallet</option>
+                        <option value="STATIC_QRIS">Static QRIS</option>
                     </select>
                 </div>
 
@@ -90,7 +91,7 @@ const props = defineProps<{
 const emit = defineEmits(['close', 'confirm'])
 
 const paymentDate = ref(toLocalISO(new Date()))
-const paymentMethod = ref<'CASH' | 'MANUAL_TRANSFER'>('CASH')
+const paymentMethod = ref<'CASH' | 'MANUAL_TRANSFER' | 'STATIC_QRIS'>('CASH')
 
 const formattedDisplayDate = computed(() => {
     if (!paymentDate.value) return 'Pilih Tanggal'

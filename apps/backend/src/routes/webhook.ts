@@ -29,7 +29,6 @@ app.post('/', async (c) => {
     try {
         const signature = c.req.header('X-Wainthego-Signature');
         const rawBody = await c.req.text();
-
         const payload = JSON.parse(rawBody);
 
         // --- Verify Signature if Secret is configured ---
@@ -49,32 +48,36 @@ app.post('/', async (c) => {
 
             if (signatureBuffer.length !== expectedBuffer.length || !timingSafeEqual(signatureBuffer, expectedBuffer)) {
                 console.error('[Webhook] ❌ Invalid signature');
-                console.log(`[Webhook] Expected: ${expectedSignature}`);
-                console.log(`[Webhook] Received: ${signature}`);
                 return c.json({ error: 'Invalid signature' }, 401);
             }
         }
 
         const { event, instance_id, data } = payload;
 
+        // --- 1. Handle Incoming Messages ---
         if (event === 'message.received') {
-            // INI PESAN MASUK
-            // "Orang lain kirim pesan ke WA kita"
-            const msgInfo = data?.Info || payload.Info || payload.data?.Info; // Fallbacks just in case
-            const msgMessage = data?.Message || payload.Message || payload.data?.Message;
+            const msgInfo = data?.Info || payload.Info;
+            const msgMessage = data?.Message || payload.Message;
 
             if (msgInfo && msgMessage) {
+                // Robust Check for IsFromMe (to filter out echoes/outgoing messages)
+                // We check multiple possible locations and types
+                const isFromMe =
+                    msgInfo.IsFromMe === true ||
+                    msgInfo.IsFromMe === 'true' ||
+                    msgInfo.key?.fromMe === true ||
+                    msgInfo.MessageSource?.IsFromMe === true;
+
+                if (isFromMe) {
+                    // console.log('[Webhook] Skipping outgoing message (echo)');
+                    return c.json({ success: true, message: 'Echo ignored' });
+                }
+
                 // Prefer SenderAlt or Sender from MessageSource if available
-                const rawSender = msgInfo.SenderAlt || msgInfo.MessageSource?.Sender || msgInfo.RemoteJid || '';
+                const rawSender = msgInfo.SenderAlt || msgInfo.MessageSource?.Sender || msgInfo.RemoteJid || msgInfo.Sender || '';
                 const pushName = msgInfo.PushName || 'Unknown';
                 const messageId = msgInfo.ID;
                 const text = extractMessageText(msgMessage);
-                const isFromMe = msgInfo.MessageSource?.IsFromMe || false;
-
-                // If it's from me, it's an outgoing message echo, usually we skip it 
-                if (isFromMe) {
-                    return c.json({ success: true, message: 'Echo ignored' });
-                }
 
                 // Extract digits only for the phone number part
                 const phoneNumber = rawSender.split('@')[0].split(':')[0];
@@ -107,34 +110,20 @@ app.post('/', async (c) => {
                     createdAt: new Date()
                 });
 
-                // Lakukan auto-reply di sini... (Placeholder as per user request)
-
                 return c.json({
                     success: true,
                     message: 'Message received and saved',
-                    details: {
-                        from: rawSender,
-                        phone: phoneNumber,
-                        id: messageId
-                    }
                 });
             } else {
-                console.warn('[Webhook] message.received event but missing Info/Message data');
                 return c.json({ success: false, message: 'Missing Info/Message data' }, 400);
             }
 
+            // --- 2. Handle Status Updates ---
         } else if (event === 'message.status' || event === 'message_status') {
-            // INI UPDATE STATUS CENTANG
-            // "Pesan yang KITA kirim, statusnya berubah"
-            // console.log(`Pesan ${data.id} ke ${data.to} berubah jadi: ${data.status}`);
-            // JANGAN auto-reply di sini! Cuma update status DB.
-
             const message_id = data?.id || data?.message_id || payload.message_id;
             const status = data?.status || payload.status;
 
             if (message_id && status) {
-                console.log(`[Webhook] 📝 Status Update: ${message_id} -> ${status}`);
-
                 // Find the log entry
                 const logs = await db.select()
                     .from(whatsappLogs)
@@ -142,7 +131,7 @@ app.post('/', async (c) => {
                     .limit(1);
 
                 if (logs.length === 0) {
-                    console.warn(`[Webhook] ⚠️ Status update for unknown message ${message_id}`);
+                    // console.warn(`[Webhook] ⚠️ Status update for unknown message ${message_id}`);
                     return c.json({ message: 'Message not found, ignoring' }, 200);
                 }
 
@@ -166,24 +155,20 @@ app.post('/', async (c) => {
                 return c.json({
                     success: true,
                     message: 'Status updated',
-                    message_id,
-                    new_status: newStatus
                 });
             } else {
                 return c.json({ error: 'Missing message_id or status' }, 400);
             }
 
+            // --- 3. Handle Connection Updates ---
         } else if (event === 'connection.update') {
-            // Status login berubah
             const status = data?.status || 'unknown';
             console.log(`[Webhook] 🔌 Instance ${instance_id} status: ${status}`);
             return c.json({ success: true, message: 'Connection update processed' });
         }
 
         // --- Unknown/Unhandled Events ---
-        // If it's not one of the above, we just log it and return success to avoid retries
-        console.log('[Webhook] Unhandled event:', event);
-        return c.json({ success: true, message: 'Event received' });
+        return c.json({ success: true, message: 'Event ignored' });
 
     } catch (e: any) {
         console.error('[Webhook] Error processing webhook:', e);

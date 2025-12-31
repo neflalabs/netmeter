@@ -77,7 +77,7 @@ export const tokenParamSchema = z.object({
 
 export const paginationSchema = z.object({
     page: z.preprocess((val) => val ?? '1', z.string().regex(/^\d+$/).transform(Number)),
-    limit: z.preprocess((val) => val ?? '10', z.string().regex(/^\d+$/).transform(Number)),
+    limit: z.preprocess((val) => val ?? '5', z.string().regex(/^\d+$/).transform(Number)),
 });
 
 export const manualPaySchema = z.object({

@@ -5,7 +5,6 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
-import { useFormatters } from '@/composables/useFormatters'
 
 // UI Components
 import Card from '@/components/ui/Card.vue'
@@ -18,11 +17,13 @@ import DropdownMenuTrigger from '@/components/ui/DropdownMenuTrigger.vue'
 import DropdownMenuContent from '@/components/ui/DropdownMenuContent.vue'
 import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue'
 
+import Pagination from '@/components/ui/Pagination.vue'
+
 const router = useRouter()
 const userStore = useUserStore()
 const { toast } = useToast()
 const { confirm } = useConfirm()
-const { formatCurrency } = useFormatters()
+// No formatters needed currently
 
 const searchQuery = ref('')
 const filterStatus = ref('all')
@@ -94,27 +95,40 @@ onMounted(() => {
         </div>
         
         <div class="flex items-center gap-2">
+            <!-- Page Size Selector -->
+            <div class="flex items-center gap-1.5 bg-secondary/20 h-9 px-3 rounded-xl border border-border/50">
+                <span class="text-[10px] font-bold text-muted-foreground uppercase">Show</span>
+                <select 
+                    :value="userStore.pagination.limit"
+                    @change="(e) => userStore.fetchUsers(true, true, 1, parseInt((e.target as HTMLSelectElement).value))"
+                    class="bg-transparent text-xs font-bold text-primary focus:outline-none cursor-pointer"
+                >
+                    <option :value="5">5</option>
+                    <option :value="10">10</option>
+                    <option :value="20">20</option>
+                </select>
+            </div>
+
             <Button @click="router.push('/users/new')" class="gap-2">
                 <UserPlus class="w-4 h-4" />
                 Tambah User
             </Button>
-            <Button @click="userStore.fetchUsers" variant="secondary" size="icon" :disabled="userStore.isFetching">
+            <Button @click="userStore.fetchUsers(true)" variant="secondary" size="icon" :disabled="userStore.isFetching">
                 <RefreshCcw class="w-4 h-4" :class="{ 'animate-spin': userStore.isFetching }" />
             </Button>
         </div>
     </div>
 
-    <!-- Users Table -->
     <Card>
-        <CardContent class="p-0">
-            <div v-if="userStore.isFetching && userStore.users.length === 0" class="p-8 text-center text-muted-foreground">
+        <CardContent class="p-0 flex flex-col min-h-[400px]">
+            <div v-if="userStore.isFetching && userStore.users.length === 0" class="flex-1 p-8 text-center text-muted-foreground flex items-center justify-center">
                 <div class="animate-pulse">Memuat data user...</div>
             </div>
-            <div v-else-if="filteredUsers.length === 0" class="p-8 text-center text-muted-foreground">
-                <Users class="w-12 h-12 mx-auto mb-2 opacity-20" />
+            <div v-else-if="filteredUsers.length === 0" class="flex-1 p-8 text-center text-muted-foreground flex flex-col items-center justify-center gap-2">
+                <Users class="w-12 h-12 mx-auto opacity-20" />
                 <p>Tidak ada data user ditemukan</p>
             </div>
-            <div v-else class="divide-y divide-border">
+            <div v-else class="flex-1 divide-y divide-border">
                 <div v-for="user in filteredUsers" :key="user.id" class="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-secondary/50 transition-colors gap-3">
                     <div class="flex items-center gap-4">
                         <div 
@@ -164,6 +178,17 @@ onMounted(() => {
                         </DropdownMenu>
                     </div>
                 </div>
+            </div>
+
+            <!-- Pagination UI -->
+            <div v-if="userStore.pagination.total > 0" class="border-t border-border mt-auto bg-secondary/5">
+                <Pagination 
+                    :current-page="userStore.pagination.page"
+                    :total-pages="userStore.pagination.totalPages"
+                    :total="userStore.pagination.total"
+                    :limit="userStore.pagination.limit"
+                    @change="(page) => userStore.fetchUsers(true, true, page)"
+                />
             </div>
         </CardContent>
     </Card>

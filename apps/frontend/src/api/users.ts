@@ -8,12 +8,13 @@ import { API_ENDPOINTS } from '@/utils/constants'
 export const usersApi = () => {
     const api = useApi()
 
-    const getAll = async (params?: { includeDeleted?: boolean }): Promise<User[]> => {
+    const getAll = async (params?: { includeDeleted?: boolean, page?: number, limit?: number }): Promise<any> => {
         const queryParams = new URLSearchParams()
-        if (params?.includeDeleted) {
-            queryParams.append('include_deleted', 'true')
-        }
-        return api.get<User[]>(`${API_ENDPOINTS.USERS}?${queryParams.toString()}`)
+        if (params?.includeDeleted) queryParams.append('include_deleted', 'true')
+        if (params?.page) queryParams.append('page', params.page.toString())
+        if (params?.limit) queryParams.append('limit', params.limit.toString())
+
+        return api.get<any>(`${API_ENDPOINTS.USERS}?${queryParams.toString()}`)
     }
 
     const get = async (id: number): Promise<User> => {

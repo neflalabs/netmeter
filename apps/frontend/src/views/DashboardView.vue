@@ -1,6 +1,16 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { Search, MoreVertical, Send, ExternalLink, Receipt, Clock, CheckCircle2, RefreshCcw } from 'lucide-vue-next'
+import { 
+  Send as SendIcon, 
+  ExternalLink as ExternalLinkIcon, 
+  Receipt as ReceiptIcon, 
+  CheckCircle2 as CheckCircle2Icon, 
+  RefreshCcw as RefreshCcwIcon,
+  Users as UsersIcon, 
+  CreditCard as CreditCardIcon, 
+  TrendingUp as TrendingUpIcon, 
+  MoreHorizontal as MoreHorizontalIcon 
+} from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import Button from '@/components/ui/Button.vue'
 import Badge from '@/components/ui/Badge.vue'
@@ -27,7 +37,7 @@ import {
   PointElement,
   LineElement,
   BarElement,
-  Title,
+  Title as ChartTitle,
   Tooltip,
   Legend
 } from 'chart.js'
@@ -39,7 +49,7 @@ ChartJS.register(
   PointElement,
   LineElement,
   BarElement,
-  Title,
+  ChartTitle,
   Tooltip,
   Legend
 )
@@ -51,7 +61,7 @@ const userStore = useUserStore()
 const reportStore = useReportStore()
 const router = useRouter() // New: Added useRouter
 
-const isLoading = computed(() => billStore.isFetching || userStore.isFetching)
+const isLoading = computed(() => billStore.isFetching || userStore.isFetching || reportStore.isFetchingFinancial)
 const sendingNotif = ref(false)
 const lastTransactionId = ref<number | null>(null)
 
@@ -68,11 +78,7 @@ const currentMonthBills = computed(() => {
 const pendingBills = computed(() => currentMonthBills.value.filter(b => b.status === 'UNPAID'))
 const paidBills = computed(() => currentMonthBills.value.filter(b => b.status === 'PAID'))
 
-const estimatedIncome = computed(() => {
-    return billStore.bills
-        .filter(b => b.status === 'UNPAID')
-        .reduce((sum, b) => sum + (b.amount || 0), 0)
-})
+const estimatedIncome = computed(() => reportStore.financialData.summary.totalOutstanding)
 
 const handleNotify = async (id: number) => {
     sendingNotif.value = true
@@ -129,8 +135,6 @@ onMounted(async () => {
     const now = new Date()
     const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
     const end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
-    reportStore.fetchFinancial(start, end)
-
     reportStore.fetchFinancial(start, end)
     
     // Initial fetch of latest transaction to set baseline (don't notify for past)
@@ -221,26 +225,26 @@ onUnmounted(() => {
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard 
             title="User Aktif" 
-            :value="userStore.users.length" 
-            :icon="Users" 
+            :value="userStore.pagination.total" 
+            :icon="UsersIcon" 
             variant="primary"
         />
         <StatsCard 
             title="Estimated" 
             :value="`Rp ${formatCurrency(estimatedIncome)}`"
-            :icon="CreditCard" 
+            :icon="CreditCardIcon" 
             variant="secondary"
         />
         <StatsCard 
             title="Pemasukan" 
             :value="`Rp ${formatCurrency(reportStore.financialData.summary.totalIncome)}`"
-            :icon="TrendingUp" 
+            :icon="TrendingUpIcon" 
             variant="success"
         />
         <StatsCard 
             title="Metode Top" 
             :value="reportStore.financialData.summary.topMethod || '-'" 
-            :icon="CreditCard" 
+            :icon="CreditCardIcon" 
             variant="warning"
         />
     </div>
@@ -250,7 +254,7 @@ onUnmounted(() => {
         <Card class="lg:col-span-2">
             <CardHeader class="pb-2">
                 <CardTitle class="text-sm font-bold flex items-center gap-2">
-                    <TrendingUp class="w-4 h-4 text-primary" />
+                    <TrendingUpIcon class="w-4 h-4 text-primary" />
                     Tren Pemasukan (Bulan Ini)
                 </CardTitle>
             </CardHeader>
@@ -294,7 +298,7 @@ onUnmounted(() => {
     <CardHeader class="pb-3 px-4 pt-4 border-b border-border">
         <div class="flex items-center justify-between">
             <CardTitle class="text-base flex items-center gap-2">
-                <Receipt class="w-4 h-4" />
+                <ReceiptIcon class="w-4 h-4" />
                 Tagihan Bulan Ini
             </CardTitle>
             <div class="flex items-center gap-2">
@@ -312,7 +316,7 @@ onUnmounted(() => {
             <div class="animate-pulse">Memuat data...</div>
         </div>
         <div v-else-if="currentMonthBills.length === 0" class="p-8 text-center text-muted-foreground">
-            <Receipt class="w-12 h-12 mx-auto mb-2 text-muted-foreground/50" />
+            <ReceiptIcon class="w-12 h-12 mx-auto mb-2 text-muted-foreground/50" />
             <p class="font-medium">Belum ada tagihan bulan ini</p>
             <p class="text-xs mt-1">Klik "Buat Tagihan" untuk generate tagihan</p>
         </div>
@@ -341,16 +345,16 @@ onUnmounted(() => {
                         <DropdownMenu>
                         <DropdownMenuTrigger as-child>
                             <Button variant="ghost" size="icon" class="h-8 w-8 rounded-full text-muted-foreground">
-                                <MoreHorizontal class="w-4 h-4" />
+                                <MoreHorizontalIcon class="w-4 h-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" class="w-56">
                                 <DropdownMenuItem @click="router.push(`/pay/${bill.paymentToken}`)" class="gap-2">
-                                    <ExternalLink class="w-4 h-4" />
+                                    <ExternalLinkIcon class="w-4 h-4" />
                                     Buka Halaman Bayar
                                 </DropdownMenuItem>
                                 <DropdownMenuItem @click="handleNotify(bill.id)" :disabled="sendingNotif" class="gap-2">
-                                    <Send class="w-4 h-4 text-blue-500" />
+                                    <SendIcon class="w-4 h-4 text-blue-500" />
                                     Kirim Notif WhatsApp
                                 </DropdownMenuItem>
                                 <DropdownMenuItem 
@@ -358,15 +362,15 @@ onUnmounted(() => {
                                     @click="openPaymentDialog(bill.id)"
                                     class="gap-2"
                                 >
-                                    <CheckCircle2 class="w-4 h-4 text-green-500" />
-                                    Tandai Lunas (Cash)
+                                    <CheckCircle2Icon class="w-4 h-4 text-green-500" />
+                                    Tandai Lunas
                                 </DropdownMenuItem>
                                 <DropdownMenuItem 
                                     v-if="bill.status === 'PAID'"
                                     @click="handlePaymentNotify(bill.id)"
                                     class="gap-2"
                                 >
-                                    <Send class="w-4 h-4 text-green-500" />
+                                    <SendIcon class="w-4 h-4 text-green-500" />
                                     Kirim Bukti Bayar
                                 </DropdownMenuItem>
                             </DropdownMenuContent>

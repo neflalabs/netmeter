@@ -2,19 +2,33 @@
 import { Hono } from 'hono';
 import { db } from '../db';
 import { users, bills, settings, payments } from '@netmeter/db';
-import { eq, and, isNull, ne, desc, or } from 'drizzle-orm';
+import { eq, and, isNull, ne, desc, or, sql } from 'drizzle-orm';
 import { zValidator } from '@hono/zod-validator';
-import { idParamSchema, manualPaySchema, userIdQuerySchema } from '@netmeter/shared';
+import { idParamSchema, manualPaySchema, userIdQuerySchema, paginationSchema } from '@netmeter/shared';
 import { whatsappService } from '../services/whatsapp';
 import { NotificationService, MONTH_NAMES, formatDate } from '../services/notification';
+import { z } from 'zod';
 
 const app = new Hono();
 
-// GET / - List all bills
-app.get('/', zValidator('query', userIdQuerySchema), async (c) => {
-    try {
-        const { userId } = c.req.valid('query');
+const billsQuerySchema = paginationSchema.extend({
+    userId: z.string().regex(/^\d+$/).transform(Number).optional(),
+});
 
+// GET / - List all bills
+app.get('/', zValidator('query', billsQuerySchema), async (c) => {
+    try {
+        const { userId, page, limit } = c.req.valid('query');
+        const offset = (page - 1) * limit;
+
+        const whereClause = userId ? eq(bills.userId, userId) : undefined;
+
+        // 1. Get total count
+        const [totalCount] = await db.select({ count: sql<number>`count(*)` })
+            .from(bills)
+            .where(whereClause);
+
+        // 2. Build paginated query
         let query = db.select({
             id: bills.id,
             month: bills.month,
@@ -42,15 +56,25 @@ app.get('/', zValidator('query', userIdQuerySchema), async (c) => {
             ))
             .$dynamic(); // Enable dynamic query building
 
-        if (userId) {
-            query = query.where(eq(bills.userId, userId));
+        if (whereClause) {
+            query = query.where(whereClause);
         }
 
         const allBills = await query
             .groupBy(bills.id)
-            .orderBy(desc(bills.year), desc(bills.month));
+            .orderBy(desc(bills.year), desc(bills.month))
+            .limit(limit)
+            .offset(offset);
 
-        return c.json(allBills);
+        return c.json({
+            data: allBills,
+            pagination: {
+                page,
+                limit,
+                total: totalCount.count,
+                totalPages: Math.ceil(totalCount.count / limit)
+            }
+        });
     } catch (e) {
         console.error(e);
         return c.json({ error: 'Failed to fetch bills' }, 500);

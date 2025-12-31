@@ -122,7 +122,20 @@
                             <div class="w-1.5 h-4 bg-primary rounded-full"></div>
                             <h3 class="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">WhatsApp Message Logs</h3>
                         </div>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-3">
+                            <!-- Page Size Selector -->
+                            <div class="flex items-center gap-1.5 bg-secondary/20 p-0.5 px-2 rounded-lg border border-border/50">
+                                <span class="text-[9px] font-bold text-muted-foreground uppercase">Show</span>
+                                <select 
+                                    v-model="pageSize" 
+                                    class="bg-transparent text-[9px] font-bold text-primary focus:outline-none cursor-pointer"
+                                >
+                                    <option :value="5">5</option>
+                                    <option :value="10">10</option>
+                                    <option :value="20">20</option>
+                                </select>
+                            </div>
+
                              <div class="flex items-center bg-secondary/20 p-0.5 rounded-lg border border-border/50">
                                 <button
                                     v-for="filter in logFilters"
@@ -147,9 +160,9 @@
                         </div>
                     </div>
 
-                    <Card class="border-none bg-secondary/10 shadow-none overflow-hidden">
-                        <div v-if="filteredLogs.length > 0" class="divide-y divide-border/50">
-                            <div v-for="log in filteredLogs" :key="log.id" class="p-4 hover:bg-secondary/20 transition-colors">
+                    <Card class="border-none bg-secondary/10 shadow-none overflow-hidden flex flex-col min-h-[400px]">
+                        <div v-if="messageLogs.length > 0" class="flex-1 divide-y divide-border/50">
+                            <div v-for="log in messageLogs" :key="log.id" class="p-4 hover:bg-secondary/20 transition-colors">
                                 <div class="flex items-start justify-between gap-4">
                                     <div class="space-y-1 min-w-0">
                                         <div class="flex items-center gap-2">
@@ -171,11 +184,22 @@
                                 </div>
                             </div>
                         </div>
-                        <div v-else class="p-12 text-center space-y-3">
+                        <div v-else class="flex-1 flex flex-col items-center justify-center p-12 space-y-3">
                             <div class="inline-flex w-12 h-12 bg-secondary/50 rounded-full items-center justify-center text-muted-foreground/30">
                                 <MessageCircle class="w-6 h-6" />
                             </div>
                             <p class="text-xs text-muted-foreground">No messages recorded for this filter.</p>
+                        </div>
+
+                        <!-- Pagination Controls -->
+                        <div v-if="pagination.total > 0" class="border-t border-border/50 bg-secondary/5">
+                            <Pagination 
+                                :current-page="currentPage"
+                                :total-pages="pagination.totalPages"
+                                :total="pagination.total"
+                                :limit="pageSize"
+                                @change="handlePageChange"
+                            />
                         </div>
                     </Card>
                 </section>
@@ -196,7 +220,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { MessageCircle, Info, RefreshCcw } from 'lucide-vue-next'
 import type { UpdateSettingsDTO } from '@/types'
 import { whatsappApi } from '@/api'
@@ -208,6 +232,7 @@ import Switch from '@/components/ui/Switch.vue'
 import Button from '@/components/ui/Button.vue'
 import Input from '@/components/ui/Input.vue'
 import Label from '@/components/ui/Label.vue'
+import Pagination from '@/components/ui/Pagination.vue'
 
 import { useToast } from '@/composables/useToast'
 
@@ -225,6 +250,14 @@ const loadingLogs = ref(false)
 const activeFilter = ref<'ALL' | 'INCOMING' | 'OUTGOING'>('ALL')
 const copied = ref(false)
 
+// Pagination State
+const currentPage = ref(1)
+const pageSize = ref(5)
+const pagination = ref({
+    total: 0,
+    totalPages: 0
+})
+
 const checkingStatus = computed(() => whatsappStore.isFetching)
 
 const logFilters = [
@@ -232,13 +265,6 @@ const logFilters = [
     { label: 'IN', value: 'INCOMING' },
     { label: 'OUT', value: 'OUTGOING' }
 ] as const
-
-const filteredLogs = computed(() => {
-    if (activeFilter.value === 'ALL') return messageLogs.value
-    if (activeFilter.value === 'INCOMING') return messageLogs.value.filter(l => l.type === 'INCOMING')
-    if (activeFilter.value === 'OUTGOING') return messageLogs.value.filter(l => l.type !== 'INCOMING')
-    return messageLogs.value
-})
 
 const webhookUrl = computed(() => {
     const origin = window.location.origin
@@ -273,14 +299,37 @@ const copyWebhook = async () => {
 const fetchLogs = async () => {
     loadingLogs.value = true
     try {
-        const res = await api.getLogs(1, 30) as any
+        const type = activeFilter.value === 'ALL' ? undefined : 
+                   (activeFilter.value === 'OUTGOING' ? 'OUTGOING' : activeFilter.value)
+        
+        // Note: Backend /logs currently doesn't handle 'OUTGOING' as a special type 
+        // that excludes INCOMING. In the backend it's BILL, RECEIPT, REMINDER, OTHER.
+        // We'll just pass 'ALL' (undefined) or 'INCOMING' for now, 
+        // or we could improve the backend to handle OUTGOING.
+        
+        const res = await api.getLogs(currentPage.value, pageSize.value, type) as any
         messageLogs.value = res.data || []
+        pagination.value = {
+            total: res.pagination?.total || 0,
+            totalPages: res.pagination?.totalPages || 0
+        }
     } catch (err) {
         console.error('Failed to fetch logs', err)
     } finally {
         loadingLogs.value = false
     }
 }
+
+const handlePageChange = (page: number) => {
+    currentPage.value = page
+    fetchLogs()
+}
+
+// Reset page and refetch when filter or size changes
+watch([activeFilter, pageSize], () => {
+    currentPage.value = 1
+    fetchLogs()
+})
 
 const checkStatus = async () => {
     try {

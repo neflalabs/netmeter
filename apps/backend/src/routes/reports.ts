@@ -13,10 +13,15 @@ app.get('/financial', zValidator('query', financialReportSchema), async (c) => {
     try {
         const { startDate: startStr, endDate: endStr, method: methodFilter } = c.req.valid('query');
 
-        // Default to current month if not specified
         const now = new Date();
-        const start = startStr || new Date(now.getFullYear(), now.getMonth(), 1);
-        const end = endStr || new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+        const start = startStr ? new Date(new Date(startStr).setHours(0, 0, 0, 0)) : new Date(now.getFullYear(), now.getMonth(), 1);
+        const end = endStr ? new Date(new Date(endStr).setHours(23, 59, 59, 999)) : new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+        // Standardize on Unix timestamps in SECONDS for the raw SQL comparison
+        const startTs = Math.floor(start.getTime() / 1000);
+        const endTs = Math.floor(end.getTime() / 1000);
+
+        console.log(`[Reports] Fetching financial from TS ${startTs} to ${endTs}`);
 
         // 1. Get Payments within range (for Income & Charts)
         let paymentQuery = db.select({
@@ -32,7 +37,8 @@ app.get('/financial', zValidator('query', financialReportSchema), async (c) => {
             .innerJoin(users, eq(bills.userId, users.id))
             .where(
                 and(
-                    between(payments.paidAt, start, end),
+                    sql`${payments.paidAt} >= ${startTs}`,
+                    sql`${payments.paidAt} <= ${endTs}`,
                     eq(payments.status, 'VERIFIED'),
                     methodFilter ? eq(payments.method, methodFilter) : undefined
                 )
@@ -40,6 +46,7 @@ app.get('/financial', zValidator('query', financialReportSchema), async (c) => {
             .orderBy(desc(payments.paidAt));
 
         const paymentData = await paymentQuery;
+        console.log(`[Reports] Found ${paymentData.length} payments`);
 
         const totalIncome = paymentData.reduce((sum, p) => sum + p.amount, 0);
         const transactionCount = paymentData.length;
@@ -83,7 +90,9 @@ app.get('/financial', zValidator('query', financialReportSchema), async (c) => {
 
         paymentData.forEach(p => {
             if (p.paidAt) {
-                const dayKey = new Date(p.paidAt).toISOString().split('T')[0];
+                // Ensure p.paidAt is a Date object. If it's a number (seconds), convert to ms
+                const date = p.paidAt instanceof Date ? p.paidAt : new Date((p.paidAt as any) * 1000);
+                const dayKey = date.toISOString().split('T')[0];
                 const current = dailyIncomeMap.get(dayKey) || 0;
                 dailyIncomeMap.set(dayKey, current + p.amount);
             }
@@ -126,6 +135,7 @@ app.get('/financial', zValidator('query', financialReportSchema), async (c) => {
         // Format transactions list
         const formattedTransactions = paymentData.slice(0, 50).map(tx => ({
             ...tx,
+            paidAt: tx.paidAt instanceof Date ? tx.paidAt : (tx.paidAt ? new Date((tx.paidAt as any) * 1000) : null),
             method: formatMethod(tx.method || '')
         }));
 
@@ -168,7 +178,7 @@ app.get('/payment-dates', async (c) => {
 
         allPayments.forEach(p => {
             if (p.paidAt) {
-                const date = new Date(p.paidAt);
+                const date = p.paidAt instanceof Date ? p.paidAt : new Date((p.paidAt as any) * 1000);
                 const day = date.getDate(); // 1-31
                 if (day >= 1 && day <= 31) {
                     distribution[day - 1].count++;
@@ -224,6 +234,7 @@ app.get('/latest-transaction', async (c) => {
         return c.json({
             transaction: {
                 ...tx,
+                paidAt: tx.paidAt instanceof Date ? tx.paidAt : (tx.paidAt ? new Date((tx.paidAt as any) * 1000) : null),
                 method: methodDisplay
             }
         });
