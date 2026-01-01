@@ -4,6 +4,7 @@ import { users, bills, settings } from '@netmeter/db'
 import { eq, isNull, and, sql } from 'drizzle-orm'
 import { zValidator } from '@hono/zod-validator'
 import { userSchema, idParamSchema, paginationSchema } from '@netmeter/shared'
+import { getCurrentDate } from './utils/date'
 
 import { NotificationService } from './services/notification'
 
@@ -71,6 +72,9 @@ app.post('/', zValidator('json', userSchema), async (c) => {
             return c.json({ error: 'Harga langganan belum diatur. Silakan atur harga di menu Settings terlebih dahulu.' }, 400)
         }
 
+        const appDate = getCurrentDate()
+        const joinedAt = body.joinedAt ? new Date(body.joinedAt) : appDate.toDate()
+
         const newUserRows = await db.insert(users).values({
             name: body.name,
             whatsapp: body.whatsapp,
@@ -78,8 +82,8 @@ app.post('/', zValidator('json', userSchema), async (c) => {
             address: body.address || null,
             deviceModel: body.deviceModel || null,
             notes: body.notes || null,
-            joinedAt: body.joinedAt ? new Date(body.joinedAt) : new Date(),
-            firstConnectedAt: body.firstConnectedAt ? new Date(body.firstConnectedAt) : new Date(),
+            joinedAt,
+            firstConnectedAt: body.firstConnectedAt ? new Date(body.firstConnectedAt) : joinedAt,
             dueDay: body.dueDay !== undefined ? parseInt(body.dueDay) : null,
             reminderInterval: body.reminderInterval !== undefined ? parseInt(body.reminderInterval) : null,
             reminderEnabled: body.reminderEnabled !== undefined ? body.reminderEnabled : true,
@@ -87,10 +91,9 @@ app.post('/', zValidator('json', userSchema), async (c) => {
 
         const user = newUserRows[0]
 
-        // Auto-generate bill for current month
-        const today = new Date()
-        const currentMonth = today.getMonth() + 1
-        const currentYear = today.getFullYear()
+        // Auto-generate bill for current month (Configured Timezone)
+        const currentMonth = appDate.month
+        const currentYear = appDate.year
 
         if (monthlyFee > 0) {
             const newBills = await db.insert(bills).values({
@@ -191,9 +194,9 @@ app.post('/:id/restore', zValidator('param', idParamSchema), async (c) => {
         const user = restoredUser[0];
 
         // Ensure bill generation logic: Check if a bill for the current month exists
-        const today = new Date();
-        const currentMonth = today.getMonth() + 1;
-        const currentYear = today.getFullYear();
+        const appDate = getCurrentDate()
+        const currentMonth = appDate.month
+        const currentYear = appDate.year
 
         const existingBill = await db.select()
             .from(bills)

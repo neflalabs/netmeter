@@ -7,6 +7,7 @@ import { zValidator } from '@hono/zod-validator';
 import { idParamSchema, manualPaySchema, userIdQuerySchema, paginationSchema } from '@netmeter/shared';
 import { whatsappService } from '../services/whatsapp';
 import { NotificationService, MONTH_NAMES, formatDate } from '../services/notification';
+import { getCurrentDate } from '../utils/date';
 import { z } from 'zod';
 
 const app = new Hono();
@@ -84,9 +85,9 @@ app.get('/', zValidator('query', billsQuerySchema), async (c) => {
 // POST /generate - Generate bills for all active users
 app.post('/generate', async (c) => {
     try {
-        const today = new Date();
-        const currentMonth = today.getMonth() + 1; // 1-12
-        const currentYear = today.getFullYear();
+        const appDate = getCurrentDate();
+        const currentMonth = appDate.month; // 1-12
+        const currentYear = appDate.year;
 
         // 1. Get Settings for Monthly Fee
         const appSettings = await db.select().from(settings).limit(1);

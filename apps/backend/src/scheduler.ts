@@ -3,6 +3,7 @@ import { db } from './db';
 import { users, bills, settings, payments } from '@netmeter/db';
 import { eq, and, isNull, gte } from 'drizzle-orm';
 import { NotificationService, MONTH_NAMES, normalizeTime } from './services/notification';
+import { getCurrentDate } from './utils/date';
 
 /**
  * Generate monthly bills for all active users
@@ -10,11 +11,12 @@ import { NotificationService, MONTH_NAMES, normalizeTime } from './services/noti
  */
 async function generateMonthlyBills() {
     try {
-        const today = new Date();
-        const currentMonth = today.getMonth() + 1; // 1-12
-        const currentYear = today.getFullYear();
+        const appDate = getCurrentDate();
+        const currentMonth = appDate.month; // 1-12
+        const currentYear = appDate.year;
+        const today = appDate.toDate();
 
-        console.log(`[Scheduler] Starting bill generation for ${currentMonth}/${currentYear}...`);
+        console.log(`[Scheduler] Starting bill generation for ${currentMonth}/${currentYear} (Timezone: ${process.env.APP_TIMEZONE || 'Asia/Jayapura'})...`);
 
         // 1. Get Settings for Monthly Fee
         const appSettings = await db.select().from(settings).limit(1);
@@ -260,7 +262,7 @@ export function startScheduler() {
         console.log('[Scheduler] Triggered: Monthly bill generation');
         await generateMonthlyBills();
     }, {
-        timezone: 'Asia/Jayapura'
+        timezone: process.env.APP_TIMEZONE || 'Asia/Jayapura'
     });
 
     // 2. Daily Tasks (Check every minute for specific times)
@@ -273,9 +275,9 @@ export function startScheduler() {
             const reminderTime = sets.reminderTime || '09:00';
             const autoBillTime = sets.autoBillTime || '09:00';
 
-            // Get current time in Asia/Jayapura
+            // Get current time in Configured Timezone
             const now = new Intl.DateTimeFormat('en-GB', {
-                timeZone: 'Asia/Jayapura',
+                timeZone: process.env.APP_TIMEZONE || 'Asia/Jayapura',
                 hour: '2-digit',
                 minute: '2-digit',
                 hour12: false
@@ -303,7 +305,7 @@ export function startScheduler() {
             console.error('[Scheduler] Cron Error:', e);
         }
     }, {
-        timezone: 'Asia/Jayapura'
+        timezone: process.env.APP_TIMEZONE || 'Asia/Jayapura'
     });
 
     console.log('[Scheduler] ✅ Schedulers started (Monthly gen & Daily/Periodic tasks)');
