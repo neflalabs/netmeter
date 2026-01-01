@@ -46,15 +46,38 @@ app.post('/preview-qris', async (c) => {
 app.get('/', async (c) => {
     try {
         const storedSettings = await db.select().from(settings).limit(1);
+
+        let finalSettings;
         if (storedSettings.length === 0) {
             // Auto-seed default settings with singleton pattern
             const newSettings = await db.insert(settings).values({
                 singleton: 1,
                 ...DEFAULT_SETTINGS
             }).returning();
-            return c.json(newSettings[0]);
+            finalSettings = newSettings[0];
+        } else {
+            finalSettings = storedSettings[0];
+
+            // Fallback for null values to DEFAULT_SETTINGS
+            // Only fallback if value is null, allowing users to explicitly save an empty string
+            const fallbackKeys = [
+                'billTemplate',
+                'paymentTemplate',
+                'reminderTemplate',
+                'waServiceUrl',
+                'waApiKey',
+                'waWebhookSecret',
+                'qrisRawString'
+            ];
+
+            fallbackKeys.forEach(key => {
+                if (finalSettings[key] === null) {
+                    finalSettings[key] = (DEFAULT_SETTINGS as any)[key];
+                }
+            });
         }
-        return c.json(storedSettings[0]);
+
+        return c.json(finalSettings);
     } catch (e) {
         return c.json({ error: 'Failed to fetch settings' }, 500);
     }
