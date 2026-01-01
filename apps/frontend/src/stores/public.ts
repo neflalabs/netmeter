@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { useIntervalFn } from '@vueuse/core'
 import type { Settings } from '@/types'
 
 export const usePublicStore = defineStore('public', () => {
@@ -7,7 +8,6 @@ export const usePublicStore = defineStore('public', () => {
     const publicBills = ref<any[]>([])
     const isFetchingSettings = ref(false)
     const isFetchingBills = ref(false)
-    let pollingInterval: number | null = null
 
     async function fetchSettings() {
         isFetchingSettings.value = true
@@ -37,24 +37,22 @@ export const usePublicStore = defineStore('public', () => {
         }
     }
 
-    function startPolling(intervalMs = 10000) {
-        if (pollingInterval) return
+    const { pause, resume } = useIntervalFn(async () => {
+        await Promise.allSettled([
+            fetchSettings(),
+            fetchPublicBills()
+        ])
+    }, 30000, { immediate: false })
 
+    function startPolling() {
         // Initial fetch
         fetchSettings()
         fetchPublicBills()
-
-        pollingInterval = window.setInterval(() => {
-            fetchSettings()
-            fetchPublicBills()
-        }, intervalMs)
+        resume()
     }
 
     function stopPolling() {
-        if (pollingInterval) {
-            clearInterval(pollingInterval)
-            pollingInterval = null
-        }
+        pause()
     }
 
     return {

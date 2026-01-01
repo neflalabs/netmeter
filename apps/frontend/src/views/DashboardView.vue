@@ -11,6 +11,7 @@ import {
   MoreHorizontal as MoreHorizontalIcon 
 } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
+import { useIntervalFn, useDocumentVisibility } from '@vueuse/core'
 import Button from '@/components/ui/Button.vue'
 import Badge from '@/components/ui/Badge.vue'
 import DropdownMenu from '@/components/ui/DropdownMenu.vue'
@@ -144,7 +145,7 @@ const handlePaymentConfirm = async ({ date, method }: { date: Date, method: 'CAS
     }
 }
 
-let refreshInterval: any = null
+const visibility = useDocumentVisibility()
 
 onMounted(async () => {
     // Initial fetch
@@ -166,42 +167,48 @@ onMounted(async () => {
     } catch (e) {
         console.error('Failed to fetch initial transaction', e)
     }
-
-    // Polling interval (15s)
-    refreshInterval = setInterval(async () => {
-        // 1. Refresh bills list in background
-        billStore.fetchBills(true)
-
-        // 2. Poll for new payments
-        try {
-            const res = await reportStore.fetchLatestTransaction()
-            if (res && res.transaction) {
-                const tx = res.transaction
-                // Check if we have a NEW transaction
-                if (lastTransactionId.value !== null && tx.id !== lastTransactionId.value) {
-                    // Update baseline
-                    lastTransactionId.value = tx.id
-                    
-                    // Trigger Notification
-                    toast({
-                        title: 'Pembayaran Baru!',
-                        description: `Rp ${formatCurrency(tx.amount)} dari ${tx.user} (${tx.method})`,
-                        variant: 'success',
-                        duration: 5000
-                    })
-
-                    // Refresh Dashboard Stats
-                    reportStore.fetchFinancial(start, end)
-                } else if (lastTransactionId.value === null) {
-                    // Just set the value if it was null (app just loaded/first poll)
-                    lastTransactionId.value = tx.id
-                }
-            }
-        } catch (e) {
-            console.error('Polling error', e)
-        }
-    }, 15000)
 })
+
+// Polling interval (30s)
+useIntervalFn(async () => {
+    // skip if document is hidden
+    if (visibility.value !== 'visible') return
+
+    // 1. Refresh bills list in background
+    billStore.fetchBills(true)
+
+    // 2. Poll for new payments
+    try {
+        const res = await reportStore.fetchLatestTransaction()
+        if (res && res.transaction) {
+            const tx = res.transaction
+            // Check if we have a NEW transaction
+            if (lastTransactionId.value !== null && tx.id !== lastTransactionId.value) {
+                // Update baseline
+                lastTransactionId.value = tx.id
+                
+                // Trigger Notification
+                toast({
+                    title: 'Pembayaran Baru!',
+                    description: `Rp ${formatCurrency(tx.amount)} dari ${tx.user} (${tx.method})`,
+                    variant: 'success',
+                    duration: 5000
+                })
+
+                // Refresh Dashboard Stats
+                const now = new Date()
+                const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+                const end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
+                reportStore.fetchFinancial(start, end)
+            } else if (lastTransactionId.value === null) {
+                // Just set the value if it was null (app just loaded/first poll)
+                lastTransactionId.value = tx.id
+            }
+        }
+    } catch (e) {
+        console.error('Polling error', e)
+    }
+}, 30000)
 
 // Chart Logic
 const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -232,11 +239,7 @@ const financialChartData = computed(() => ({
     }]
 }))
 
-// Cleanup interval on unmount
-import { onUnmounted } from 'vue'
-onUnmounted(() => {
-    if (refreshInterval) clearInterval(refreshInterval)
-})
+// Cleanup interval on unmount (Handled by useIntervalFn)
 </script>
 
 <template>
