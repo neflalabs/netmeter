@@ -79,9 +79,9 @@ export class NotificationService {
     static isWithinQuietHours(appSettings: any): boolean {
         if (!appSettings.quietHoursStart || !appSettings.quietHoursEnd) return false;
 
-        // Get current time in Asia/Jayapura
+        // Get current time in Configured Timezone
         const nowFormatted = new Intl.DateTimeFormat('en-GB', {
-            timeZone: 'Asia/Jayapura',
+            timeZone: process.env.APP_TIMEZONE || 'Asia/Jayapura',
             hour: '2-digit',
             minute: '2-digit',
             hour12: false

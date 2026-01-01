@@ -239,8 +239,8 @@ async function retryHeldNotifications() {
             );
         }
 
-        // 2. Check for missing Bills (already covered by sendAutoBills, but good to have)
-        await sendAutoBills();
+        // 2. Check for missing Bills (intentionally removed from catch-up)
+        // We now wait for the next scheduled autoBillTime to avoid sending at random times.
 
     } catch (error) {
         console.error('[Scheduler] ❌ Error in retryHeldNotifications:', error);
