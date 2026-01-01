@@ -43,24 +43,38 @@ const fetchBehavior = async () => {
 
 onMounted(fetchBehavior)
 
-const chartOptions = {
+const chartOptions = computed(() => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-        legend: { display: false }
+        legend: { display: false },
+        tooltip: {
+            backgroundColor: isDark ? '#1e293b' : '#ffffff',
+            titleColor: isDark ? '#f8fafc' : '#1e293b',
+            bodyColor: isDark ? '#f8fafc' : '#1e293b',
+            borderColor: isDark ? '#334155' : '#e2e8f0',
+            borderWidth: 1,
+            padding: 12,
+            cornerRadius: 8,
+            displayColors: false,
+            callbacks: {
+                title: (tooltipItems: any) => `Tanggal ${tooltipItems[0].label}`,
+                label: (context: any) => `${context.raw} Transaksi`
+            }
+        }
     },
     scales: {
         y: {
             beginAtZero: true,
-            grid: { color: isDark ? '#333' : '#e5e7eb' },
-            ticks: { color: isDark ? '#9ca3af' : '#4b5563' }
+            grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
+            ticks: { color: isDark ? '#94a3b8' : '#64748b', font: { size: 10 }, stepSize: 1 }
         },
         x: {
             grid: { display: false },
-            ticks: { color: isDark ? '#9ca3af' : '#4b5563' }
+            ticks: { color: isDark ? '#94a3b8' : '#64748b', font: { size: 10 } }
         }
     }
-}
+}))
 
 const behaviorChartData = computed(() => ({
     labels: behaviorData.value.distribution.map((d: any) => d.day),
@@ -88,34 +102,55 @@ const topRankedDays = computed(() => {
     </Alert>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card class="lg:col-span-2">
-            <CardHeader>
-                <CardTitle class="text-base">Frekuensi Pembayaran per Tanggal (1-31)</CardTitle>
+        <Card class="lg:col-span-2 border-border/40 shadow-xl shadow-black/5 dark:shadow-none">
+            <CardHeader class="pb-6">
+                <CardTitle class="text-lg font-bold">Frekuensi Pembayaran per Tanggal</CardTitle>
+                <p class="text-xs text-muted-foreground italic">Distribusi transaksi berdasarkan tanggal dalam sebulan (1-31)</p>
             </CardHeader>
-            <CardContent class="h-64">
+            <CardContent class="h-80">
                  <Bar :data="behaviorChartData" :options="chartOptions" />
             </CardContent>
         </Card>
 
-        <div class="space-y-4">
-            <h4 class="text-sm font-bold px-1">Peringkat Tanggal Terbayar</h4>
+        <div class="space-y-6">
+            <h4 class="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2 px-1">
+                 🚀 Peringkat Terpopuler
+            </h4>
             <!-- Top Dates -->
-            <div class="grid grid-cols-1 gap-3" v-if="topRankedDays.length > 0">
-                <div v-for="(day, idx) in topRankedDays" :key="day.day" class="bg-card p-4 rounded-lg border border-border flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
-                            {{ Number(idx) + 1 }}
+            <div class="grid grid-cols-1 gap-4" v-if="topRankedDays.length > 0">
+                <div v-for="(day, idx) in topRankedDays" :key="day.day" 
+                     class="group bg-card p-5 rounded-2xl border border-border/60 flex items-center justify-between hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 transform hover:-translate-y-1">
+                    <div class="flex items-center gap-4">
+                        <div class="relative">
+                             <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-blue-600 text-white flex items-center justify-center font-black text-lg shadow-lg shadow-primary/20">
+                                {{ day.day }}
+                            </div>
+                            <div class="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-yellow-500 border-2 border-card flex items-center justify-center text-[10px] font-bold text-white shadow-sm"
+                                 v-if="idx === 0">
+                                🏆
+                            </div>
                         </div>
                         <div>
-                            <div class="font-bold text-foreground">Tanggal {{ day.day }}</div>
-                            <div class="text-[10px] text-muted-foreground">{{ day.count }} Transaksi</div>
+                            <div class="font-black text-foreground text-sm">Tanggal {{ day.day }}</div>
+                            <div class="text-[10px] text-muted-foreground font-bold uppercase tracking-tight flex items-center gap-1.5 mt-0.5">
+                                <span class="w-1 h-1 rounded-full bg-emerald-500"></span>
+                                {{ day.count }} Transaksi Berhasil
+                            </div>
                         </div>
                     </div>
-                    <div class="text-xs font-medium text-emerald-500">Terpopuler</div>
+                    <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+                         <div class="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black px-3 py-1 rounded-full border border-emerald-500/20">
+                             TOP #{{ idx + 1 }}
+                         </div>
+                    </div>
                 </div>
             </div>
-            <div v-else class="text-center py-8 bg-secondary/20 rounded-lg border border-dashed border-border">
-                <p class="text-xs text-muted-foreground italic">Belum ada data transaksi.</p>
+            <div v-else class="flex flex-col items-center justify-center py-16 px-4 text-center bg-secondary/10 rounded-3xl border-2 border-dashed border-border/40">
+                <div class="w-16 h-16 bg-card rounded-full flex items-center justify-center shadow-sm border border-border mb-4">
+                    <TrendingUp class="w-8 h-8 text-muted-foreground/30" />
+                </div>
+                <h5 class="font-bold text-foreground">Data Masih Kosong</h5>
+                <p class="text-xs text-muted-foreground mt-2 max-w-[200px]">Belum ada data pembayaran yang cukup untuk melakukan analisa perilaku.</p>
             </div>
         </div>
     </div>

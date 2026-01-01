@@ -51,24 +51,41 @@ watch([startDate, endDate], fetchFinancial)
 
 onMounted(fetchFinancial)
 
-const chartOptions = {
+const chartOptions = computed(() => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-        legend: { display: false }
+        legend: { display: false },
+        tooltip: {
+            backgroundColor: isDark ? '#1e293b' : '#ffffff',
+            titleColor: isDark ? '#f8fafc' : '#1e293b',
+            bodyColor: isDark ? '#f8fafc' : '#1e293b',
+            borderColor: isDark ? '#334155' : '#e2e8f0',
+            borderWidth: 1,
+            padding: 12,
+            cornerRadius: 8,
+            displayColors: false,
+            callbacks: {
+                label: (context: any) => `Rp ${formatCurrency(context.raw)}`
+            }
+        }
     },
     scales: {
         y: {
             beginAtZero: true,
-            grid: { color: isDark ? '#333' : '#e5e7eb' },
-            ticks: { color: isDark ? '#9ca3af' : '#4b5563' }
+            grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
+            ticks: { 
+                color: isDark ? '#94a3b8' : '#64748b',
+                font: { size: 10 },
+                callback: (value: any) => value >= 1000000 ? (value/1000000) + 'jt' : value >= 1000 ? (value/1000) + 'rb' : value
+            }
         },
         x: {
             grid: { display: false },
-            ticks: { color: isDark ? '#9ca3af' : '#4b5563' }
+            ticks: { color: isDark ? '#94a3b8' : '#64748b', font: { size: 10 } }
         }
     }
-}
+}))
 
 const financialChartData = computed(() => ({
     labels: financialData.value.chart.map((d: any) => formatDate(d.date)),
@@ -84,49 +101,87 @@ const financialChartData = computed(() => ({
 <template>
   <div class="space-y-6">
     <!-- Stats Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
             title="Total Pemasukan"
-            :value="`Rp ${formatCurrency(financialData.summary.totalIncome)}`"
             :icon="TrendingUp"
             variant="success"
-        />
+            class="relative overflow-hidden group"
+        >
+            <template #default>
+                <div class="flex flex-col">
+                    <span class="text-2xl font-black text-foreground">Rp {{ formatCurrency(financialData.summary.totalIncome) }}</span>
+                    <span class="text-[10px] text-emerald-500 font-bold flex items-center gap-1 mt-1">
+                         PERIODE INI
+                    </span>
+                </div>
+            </template>
+        </StatsCard>
          <StatsCard
-            title="Outstanding (Unpaid)"
-            :value="`Rp ${formatCurrency(financialData.summary.totalOutstanding)}`"
+            title="Sisa Tagihan"
             :icon="CreditCard"
             variant="secondary"
-        />
+            class="relative overflow-hidden group"
+        >
+             <template #default>
+                <div class="flex flex-col">
+                    <span class="text-2xl font-black text-foreground">Rp {{ formatCurrency(financialData.summary.totalOutstanding) }}</span>
+                    <span class="text-[10px] text-purple-500 font-bold flex items-center gap-1 mt-1 uppercase">
+                         Belum Terbayar
+                    </span>
+                </div>
+            </template>
+        </StatsCard>
          <StatsCard
-            title="Total Transaksi"
-            :value="financialData.summary.transactionCount"
+            title="Transaksi"
             :icon="Calendar"
             variant="primary"
-        />
+        >
+             <template #default>
+                 <div class="flex flex-col">
+                    <span class="text-2xl font-black text-foreground">{{ financialData.summary.transactionCount }}</span>
+                    <span class="text-[10px] text-blue-500 font-bold flex items-center gap-1 mt-1 uppercase">
+                         Invoice Terbayar
+                    </span>
+                </div>
+            </template>
+        </StatsCard>
          <StatsCard
-            title="Metode Terpopuler"
-            :value="financialData.summary.topMethod || '-'"
+            title="Metode Top"
             :icon="CreditCard"
             variant="warning"
-        />
+        >
+               <template #default>
+                 <div class="flex flex-col">
+                    <span class="text-xl font-black text-foreground truncate">{{ financialData.summary.topMethod || '-' }}</span>
+                    <span class="text-[10px] text-yellow-600 dark:text-yellow-400 font-bold flex items-center gap-1 mt-1 uppercase">
+                         {{ financialData.summary.topMethodCount }} Kali Digunakan
+                    </span>
+                </div>
+            </template>
+        </StatsCard>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 space-y-6">
             <!-- Daily Chart -->
-            <Card>
-                <CardHeader class="flex flex-row items-center justify-between pb-2">
-                    <div class="space-y-0.5">
-                        <CardTitle class="text-base">Grafik Pemasukan Harian</CardTitle>
-                        <p class="text-[10px] text-muted-foreground">Periote {{ startDate }} s/d {{ endDate }}</p>
+            <Card class="border-border/40 shadow-xl shadow-black/5 dark:shadow-none">
+                <CardHeader class="flex flex-row items-center justify-between pb-6 gap-4">
+                    <div class="space-y-1">
+                        <CardTitle class="text-lg font-bold">Grafik Pemasukan Harian</CardTitle>
+                        <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Calendar class="w-3 h-3" />
+                             {{ startDate }} ~ {{ endDate }}
+                        </div>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <Input type="date" v-model="startDate" class="w-32 h-8 text-[10px]" />
-                        <Input type="date" v-model="endDate" class="w-32 h-8 text-[10px]" />
+                    <div class="flex items-center gap-2 bg-secondary/30 p-1.5 rounded-xl border border-border/50">
+                        <input type="date" v-model="startDate" class="bg-transparent border-none focus:ring-0 text-[11px] font-bold text-foreground w-28 uppercase cursor-pointer" />
+                        <span class="text-muted-foreground font-bold">~</span>
+                        <input type="date" v-model="endDate" class="bg-transparent border-none focus:ring-0 text-[11px] font-bold text-foreground w-28 uppercase cursor-pointer" />
                     </div>
                 </CardHeader>
-                <CardContent class="h-64">
-                     <Bar :data="financialChartData" :options="chartOptions" />
+                <CardContent class="h-80">
+                      <Bar :data="financialChartData" :options="chartOptions" />
                 </CardContent>
             </Card>
 

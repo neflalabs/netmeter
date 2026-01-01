@@ -44,24 +44,26 @@ const toggleMonth = (monthName: string) => {
 
 const yearData = computed(() => {
     // Generate structure for current year months
-    const currentYearMonths = [...months].reverse().map(monthName => {
-        const monthIndex = months.indexOf(monthName) + 1
-        
-        // Filter bills for this month and current year
-        const monthlyBills = paidBills.value.filter(b => 
-            b.month === monthIndex && b.year === currentYear
-        )
+    const currentYearMonths = [...months]
+        .map((monthName, idx) => ({ name: monthName, index: idx + 1 }))
+        .filter(m => m.index <= (currentMonthIdx + 1)) // Only show up to current month
+        .reverse()
+        .map(m => {
+            // Filter bills for this month and current year
+            const monthlyBills = paidBills.value.filter(b => 
+                b.month === m.index && b.year === currentYear
+            )
 
-        return {
-            name: monthName,
-            users: monthlyBills.map(b => ({
-                name: b.userName,
-                method: b.paymentMethod,
-                type: b.paymentType,
-                issuer: b.issuer
-            }))
-        }
-    })
+            return {
+                name: m.name,
+                users: monthlyBills.map(b => ({
+                    name: b.userName,
+                    method: b.paymentMethod,
+                    type: b.paymentType,
+                    issuer: b.issuer
+                }))
+            }
+        })
 
     return currentYearMonths.slice(0, appSettings.value.listingPerHome)
 })

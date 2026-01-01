@@ -252,6 +252,9 @@ async function retryHeldNotifications() {
 export function startScheduler() {
     console.log('[Scheduler] Initializing scheduler...');
 
+    // Run catch-up generation on startup (handles cases where server was down at midnight on the 1st)
+    generateMonthlyBills();
+
     // 1. Monthly Bill Gen (1st of month at 00:01)
     cron.schedule('1 0 1 * *', async () => {
         console.log('[Scheduler] Triggered: Monthly bill generation');

@@ -7,17 +7,21 @@ import TabsContent from '@/components/ui/TabsContent.vue'
 import FinancialTab from './stats/FinancialTab.vue'
 import PaymentBehaviorTab from './stats/PaymentBehaviorTab.vue'
 
-const activeTab = ref<'FINANCIAL' | 'BEHAVIOR'>('FINANCIAL')
+const activeTab = ref('FINANCIAL')
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="space-y-8">
    
-    <Tabs v-model:model-value="activeTab" class="w-full">
+    <Tabs v-model="activeTab" class="w-full">
       <div class="flex flex-col items-center">
-        <TabsList class="grid w-full grid-cols-2 max-w-md mb-8">
-          <TabsTrigger value="FINANCIAL">Laporan Keuangan</TabsTrigger>
-          <TabsTrigger value="BEHAVIOR">Estimasi Pembayaran</TabsTrigger>
+        <TabsList class="grid w-full grid-cols-2 max-w-md mb-8 p-1 bg-secondary/50 rounded-xl">
+          <TabsTrigger value="FINANCIAL" class="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300">
+            Laporan Keuangan
+          </TabsTrigger>
+          <TabsTrigger value="BEHAVIOR" class="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300">
+            Estimasi Pembayaran
+          </TabsTrigger>
         </TabsList>
       </div>
 

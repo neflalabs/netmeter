@@ -5,7 +5,6 @@ import {
   ExternalLink as ExternalLinkIcon, 
   Receipt as ReceiptIcon, 
   CheckCircle2 as CheckCircle2Icon, 
-  RefreshCcw as RefreshCcwIcon,
   Users as UsersIcon, 
   CreditCard as CreditCardIcon, 
   TrendingUp as TrendingUpIcon, 
@@ -22,11 +21,11 @@ import Card from '@/components/ui/Card.vue'
 import CardHeader from '@/components/ui/CardHeader.vue'
 import CardTitle from '@/components/ui/CardTitle.vue'
 import CardContent from '@/components/ui/CardContent.vue'
+import PaymentDialog from '@/components/ui/PaymentDialog.vue'
 import StatsCard from '@/components/StatsCard.vue'
 import { billsApi } from '@/api'
 import { useBillStore } from '@/stores/bill'
 import { useUserStore } from '@/stores/user'
-import { useAuthStore } from '@/stores/auth' // Corrected import
 import { useReportStore } from '@/stores/report'
 import { useToast } from '@/composables/useToast'
 import { useFormatters } from '@/composables/useFormatters' // New import
@@ -55,11 +54,13 @@ ChartJS.register(
 )
 
 const { toast } = useToast()
-const authStore = useAuthStore()
 const billStore = useBillStore()
 const userStore = useUserStore()
 const reportStore = useReportStore()
-const router = useRouter() // New: Added useRouter
+const router = useRouter() 
+
+const isPaymentDialogOpen = ref(false)
+const selectedBillId = ref<number | null>(null)
 
 const isLoading = computed(() => billStore.isFetching || userStore.isFetching || reportStore.isFetchingFinancial)
 const sendingNotif = ref(false)
@@ -114,14 +115,33 @@ const handlePaymentNotify = async (id: number) => {
     }
 }
 
-// New: Function to open payment dialog (placeholder, assuming it exists elsewhere or will be added)
 const openPaymentDialog = (billId: number) => {
-    toast({
-        title: 'Tandai Lunas',
-        description: `Fitur tandai lunas untuk tagihan ${billId} akan segera hadir.`,
-        variant: 'default'
-    })
-    // Implement actual dialog logic here
+    selectedBillId.value = billId
+    isPaymentDialogOpen.value = true
+}
+
+const handlePaymentConfirm = async ({ date, method }: { date: Date, method: 'CASH' | 'MANUAL_TRANSFER' }) => {
+    if (!selectedBillId.value) return
+    
+    isPaymentDialogOpen.value = false
+    
+    try {
+        await billStore.markAsPaid(selectedBillId.value, date, method)
+        toast({
+            title: 'Berhasil',
+            description: 'Status tagihan diperbarui menjadi LUNAS.',
+            variant: 'success'
+        })
+        // Refresh financial stats
+        const now = new Date()
+        const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
+        reportStore.fetchFinancial(start, end)
+    } catch (error) {
+        console.error(error)
+    } finally {
+        selectedBillId.value = null
+    }
 }
 
 let refreshInterval: any = null
@@ -236,7 +256,7 @@ onUnmounted(() => {
             variant="secondary"
         />
         <StatsCard 
-            title="Pemasukan" 
+            title="Pemasukan Bulan Ini" 
             :value="`Rp ${formatCurrency(reportStore.financialData.summary.totalIncome)}`"
             :icon="TrendingUpIcon" 
             variant="success"
@@ -380,5 +400,11 @@ onUnmounted(() => {
         </div>
     </CardContent>
 </Card>
+
+    <PaymentDialog 
+        :is-open="isPaymentDialogOpen" 
+        @close="isPaymentDialogOpen = false"
+        @confirm="handlePaymentConfirm"
+    />
 </div>
 </template>
