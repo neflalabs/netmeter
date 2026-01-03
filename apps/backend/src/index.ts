@@ -108,13 +108,19 @@ import webhookRoute from './routes/webhook'
 app.route('/api/webhook', webhookRoute)
 
 
-app.get('/', (c) => {
-    return c.text('Netmeter API is running on Bun!')
-})
+
+import { serveStatic } from 'hono/bun'
 
 app.get('/health', (c) => {
     return c.json({ status: 'ok', timestamp: new Date() })
 })
+
+// Serve static files from public directory (Frontend)
+app.use('/*', serveStatic({ root: './public' }))
+
+// SPA Fallback - verify file exists or just serve index.html
+app.get('*', serveStatic({ path: './public/index.html' }))
+
 
 const port = parseInt(process.env.PORT || '3000')
 console.log(`Server is running on port ${port}`)

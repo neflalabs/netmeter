@@ -1,8 +1,10 @@
 services:
-  backend:
-    container_name: netmeter-backend
-    image: ghcr.io/neflalabs/netmeter-backend:latest
+  netmeter:
+    container_name: netmeter
+    image: ghcr.io/neflalabs/netmeter:latest
     restart: unless-stopped
+    ports:
+      - "80:3000"
     volumes:
       - netmeter_db:/app/data
     environment:
@@ -14,46 +16,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-
-  frontend:
-    container_name: netmeter-frontend
-    image: ghcr.io/neflalabs/netmeter-frontend:latest
-    restart: unless-stopped
-    ports:
-      - "84:80" # adjust to your needs
-    depends_on:
-      - backend
-
-volumes:
-  netmeter_db:
-cat: c: No such file or directory
-nefla at shana in ~/docker/netmeter
- ○ cat compose.yaml
-services:
-  backend:
-    container_name: netmeter-backend
-    image: ghcr.io/neflalabs/netmeter-backend:latest
-    restart: unless-stopped
-    volumes:
-      - netmeter_db:/app/data
-    environment:
-      - DATABASE_URL=file:/app/data/netmeter.db
-      - NODE_ENV=production
-    env_file: .env
-    healthcheck:
-      test: ["CMD", "bun", "-e", "fetch('http://localhost:3000/health').then(r => r.ok ? process.exit(0) : process.exit(1))"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  frontend:
-    container_name: netmeter-frontend
-    image: ghcr.io/neflalabs/netmeter-frontend:latest
-    restart: unless-stopped
-    ports:
-      - "84:80"
-    depends_on:
-      - backend
 
 volumes:
   netmeter_db:
