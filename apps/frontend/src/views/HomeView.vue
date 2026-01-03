@@ -70,7 +70,8 @@ const yearData = computed(() => {
 
 const getPaymentLabel = (user: any) => {
     if (user.method === 'CASH') return 'Tunai'
-    if (user.method === 'MANUAL_TRANSFER') return 'Qris Statis'
+    if (user.method === 'MANUAL_TRANSFER') return 'Transfer Manual'
+    if (user.method === 'STATIC_QRIS') return 'Qris Statis'
     if (user.method === 'MIDTRANS' || user.method === 'XENDIT') {
         const issuer = user.issuer || user.type || (user.method === 'XENDIT' ? 'Xendit' : 'System')
         return `PG-${issuer.charAt(0).toUpperCase() + issuer.slice(1).toLowerCase()}`
@@ -80,7 +81,7 @@ const getPaymentLabel = (user: any) => {
 
 const getPaymentColorClass = (method: string) => {
     if (method === 'CASH') return 'text-slate-600 dark:text-slate-400 bg-slate-500/10'
-    if (method === 'MANUAL_TRANSFER') return 'text-orange-600 dark:text-orange-400 bg-orange-500/10'
+    if (method === 'MANUAL_TRANSFER' || method === 'STATIC_QRIS') return 'text-orange-600 dark:text-orange-400 bg-orange-500/10'
     if (method === 'MIDTRANS' || method === 'XENDIT') return 'text-blue-600 dark:text-blue-400 bg-blue-500/10'
     return 'text-green-600 dark:text-green-400 bg-green-500/10'
 }
