@@ -1,7 +1,7 @@
 
 import { Hono } from 'hono';
 import { PaymentService } from '../services/payment';
-import { XenditService } from '../services/xendit.service';
+
 import { db } from '../db';
 import { bills, users } from '@netmeter/db';
 import { eq } from 'drizzle-orm';
@@ -65,46 +65,7 @@ app.post('/midtrans/webhook', async (c) => {
     }
 });
 
-// --- XENDIT ---
 
-// Create Xendit Invoice
-app.post('/xendit/invoice/:id', zValidator('param', idParamSchema), async (c) => {
-    try {
-        const { id: billId } = c.req.valid('param');
-
-        const bill = await db.query.bills.findFirst({
-            where: eq(bills.id, billId),
-        });
-
-        let user: any;
-        if (bill) {
-            const u = await db.select().from(users).where(eq(users.id, bill.userId));
-            user = u[0];
-        }
-
-        if (!bill || !user) return c.json({ error: 'Bill or User not found' }, 404);
-
-        const result = await XenditService.createInvoice(billId, user);
-        return c.json(result);
-    } catch (e: any) {
-        console.error(e);
-        return c.json({ error: e.message || 'Failed to create Xendit invoice' }, 500);
-    }
-});
-
-// Xendit Webhook
-app.post('/xendit/webhook', async (c) => {
-    try {
-        const payload = await c.req.json();
-        const callbackToken = c.req.header('x-callback-token');
-
-        await XenditService.handleWebhook(payload, callbackToken);
-        return c.json({ status: 'ok' });
-    } catch (e) {
-        console.error('Xendit Webhook Error:', e);
-        return c.json({ error: 'Internal Server Error' }, 500);
-    }
-});
 
 // --- COMMON ---
 

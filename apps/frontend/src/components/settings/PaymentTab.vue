@@ -137,70 +137,7 @@
       </div>
     </div>
 
-    <!-- Xendit Payment Gateway -->
-    <div class="space-y-4 border rounded-lg p-4 bg-card">
-       <div class="flex items-center justify-between">
-        <Label class="text-base font-semibold">Xendit Payment Gateway</Label>
-        <Switch
-            :checked="form.xenditEnabled"
-            @update:checked="val => form.xenditEnabled = val"
-        />
-      </div>
-      <p class="text-sm text-muted-foreground">Aktifkan pembayaran otomatis via Xendit (Payment Links / Invoices).</p>
 
-      <div v-if="form.xenditEnabled" class="space-y-4 pt-2">
-        <div class="space-y-2">
-            <Label>Environment</Label>
-            <select
-                v-model="form.xenditEnvironment"
-                class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ring-offset-background"
-            >
-                <option value="sandbox">Sandbox (Test)</option>
-                <option value="production">Production (Live)</option>
-            </select>
-            <p class="text-[10px] text-muted-foreground">Pilih mode pengujian atau live. Mode ini menentukan jenis API Key yang harus dimasukkan.</p>
-        </div>
-
-        <div class="space-y-2">
-          <Label>Secret Key</Label>
-          <Input
-            v-model="form.xenditSecretKey"
-            placeholder="xnd_development_..."
-            type="password"
-          />
-        </div>
-
-        <div class="space-y-2">
-          <Label>Validation Token (Optional)</Label>
-          <Input
-            v-model="form.xenditVerificationToken"
-            placeholder="Webhook Verification Token"
-            type="password"
-          />
-          <p class="text-[10px] text-muted-foreground">Digunakan untuk memvalidasi bahwa webhook benar-benar dari Xendit.</p>
-        </div>
-
-        <div class="space-y-2 pt-2 border-t border-border mt-2">
-            <Label>Webhook URL</Label>
-            <div class="flex items-center gap-2">
-                <div class="relative flex-1">
-                    <Input
-                        :model-value="xenditWebhookUrl"
-                        readonly
-                        class="bg-secondary/50 font-mono text-xs pr-10"
-                    />
-                </div>
-                 <Button size="icon" variant="outline" @click="copyUrl(xenditWebhookUrl)" title="Copy URL">
-                    <Check v-if="copiedUrl === xenditWebhookUrl" class="w-4 h-4 text-green-500" />
-                    <Copy v-else class="w-4 h-4" />
-                </Button>
-            </div>
-            <p class="text-[10px] text-muted-foreground">
-                Masukkan URL ini ke dashboard Xendit > Settings > Callbacks.
-            </p>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -231,7 +168,7 @@ const getBaseUrl = () => {
 }
 
 const midtransWebhookUrl = computed(() => `${getBaseUrl()}/api/payment/midtrans/webhook`)
-const xenditWebhookUrl = computed(() => `${getBaseUrl()}/api/payment/xendit/webhook`)
+
 
 const copyUrl = (url: string) => {
     navigator.clipboard.writeText(url)

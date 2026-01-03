@@ -162,31 +162,10 @@ const confirmWaLink = computed(() => {
         </div>
     </div>
 
-    <!-- Xendit Pay Button -->
-     <div v-if="settings.xenditEnabled" class="mb-8">
-        <Button 
-            class="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20" 
-            size="lg" 
-            @click="payWithXendit" 
-            :disabled="isPaying"
-        >
-            <span v-if="isPaying" class="animate-spin mr-2">⏳</span>
-            {{ isPaying ? 'Memproses...' : 'Bayar via Xendit (Otomatis)' }}
-        </Button>
-         <p class="text-xs text-center text-muted-foreground mt-2">
-            Mendukung QRIS, GoPay, ShopeePay, Dana, OVO, dan Virtual Account Bank.
-        </p>
 
-        <div class="mt-4 text-xs text-left bg-blue-50 text-blue-800 p-3 rounded-lg border border-blue-200 flex gap-2">
-            <CheckCircle2 class="w-4 h-4 shrink-0 mt-0.5" />
-            <p>
-                <strong>Otomatis:</strong> Pembayaran ini akan <b>diverifikasi otomatis</b> oleh sistem. Anda tidak perlu mengirim bukti transfer.
-            </p>
-        </div>
-    </div>
 
     <!-- Separator 1: Auto PG vs Others -->
-    <div v-if="(settings.midtransEnabled || settings.xenditEnabled) && (settings.qrisPaymentEnabled || settings.manualPaymentEnabled)" class="relative my-8">
+    <div v-if="settings.midtransEnabled && (settings.qrisPaymentEnabled || settings.manualPaymentEnabled)" class="relative my-8">
         <div class="absolute inset-0 flex items-center">
             <span class="w-full border-t border-border"></span>
         </div>

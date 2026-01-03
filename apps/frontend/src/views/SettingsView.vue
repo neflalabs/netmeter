@@ -193,8 +193,8 @@ const waCardVariant = computed(() => {
     return waStatus.value === 'CONNECTED' ? 'success' : 'danger'
 })
 const paymentStatusVariant = computed(() => {
-    if (form.value.midtransEnabled || form.value.xenditEnabled) {
-        if (form.value.midtransEnvironment === 'production' || form.value.xenditEnabled) return 'success'
+    if (form.value.midtransEnabled) {
+        if (form.value.midtransEnvironment === 'production') return 'success'
         return 'warning'
     }
     if (form.value.qrisPaymentEnabled || form.value.manualPaymentEnabled) return 'success'
@@ -203,15 +203,10 @@ const paymentStatusVariant = computed(() => {
 
 const paymentStatusText = computed(() => {
     const hasMidtrans = form.value.midtransEnabled
-    const hasXendit = form.value.xenditEnabled
     const hasManual = form.value.manualPaymentEnabled || form.value.qrisPaymentEnabled
     
-    const gateways = []
-    if (hasMidtrans) gateways.push(form.value.midtransEnvironment === 'production' ? 'Midtrans' : 'Midtrans Sandbox')
-    if (hasXendit) gateways.push(form.value.xenditEnvironment === 'production' ? 'Xendit' : 'Xendit Sandbox')
-    
-    if (gateways.length > 0) {
-        return gateways.join(' & ') + (hasManual ? ' & Manual' : '')
+    if (hasMidtrans) {
+        return (form.value.midtransEnvironment === 'production' ? 'Midtrans' : 'Midtrans Sandbox') + (hasManual ? ' & Manual' : '')
     }
 
     if (form.value.qrisPaymentEnabled && form.value.manualPaymentEnabled) return 'QRIS & Manual'
@@ -221,8 +216,8 @@ const paymentStatusText = computed(() => {
 })
 
 const paymentStatusIcon = computed(() => {
-    if (form.value.midtransEnabled || form.value.xenditEnabled) {
-        if (form.value.midtransEnvironment === 'production' || form.value.xenditEnabled) return CheckCircle2
+    if (form.value.midtransEnabled) {
+        if (form.value.midtransEnvironment === 'production') return CheckCircle2
         return AlertCircle
     }
     if (form.value.qrisPaymentEnabled || form.value.manualPaymentEnabled) return CheckCircle2
