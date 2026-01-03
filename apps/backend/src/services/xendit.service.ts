@@ -24,13 +24,27 @@ export class XenditService {
         if (!bill) throw new Error('Bill not found');
         if (bill.status === 'PAID') throw new Error('Bill already paid');
 
+        // 1. Accumulate all UNPAID bills for this user
+        const unpaidBills = await db.select().from(bills).where(
+            and(
+                eq(bills.userId, bill.userId),
+                eq(bills.status, 'UNPAID')
+            )
+        ).orderBy(bills.year, bills.month);
+
+        const totalAmount = unpaidBills.reduce((sum, b) => sum + b.amount, 0);
+
+        // Generate Description
+        const months = unpaidBills.map(b => `${b.month}/${b.year.toString().slice(-2)}`).join(', ');
+        const description = `Pembayaran WiFi ${months}`;
+
         const externalId = `BILL-${billId}-${Date.now()}`;
         const authString = btoa(config.xenditSecretKey + ':');
 
         const payload = {
             external_id: externalId,
-            amount: bill.amount,
-            description: `Pembayaran WiFi ${bill.month}/${bill.year}`,
+            amount: totalAmount,
+            description: description,
             customer: {
                 given_names: user.name,
                 mobile_number: user.whatsapp || undefined,
@@ -94,17 +108,22 @@ export class XenditService {
 
         // 1. Update Bill status if PAID
         if (isPaid) {
-            const bill = await db.query.bills.findFirst({
+            const primaryBill = await db.query.bills.findFirst({
                 where: eq(bills.id, billId)
             });
 
-            if (bill && bill.status !== 'PAID') {
+            if (primaryBill) {
+                // Mark ALL unpaid bills for this user as PAID
                 await db.update(bills).set({
                     status: 'PAID',
                     paidAt: new Date()
-                }).where(eq(bills.id, billId));
+                }).where(and(
+                    eq(bills.userId, primaryBill.userId),
+                    eq(bills.status, 'UNPAID')
+                ));
             }
         }
+
 
         const paymentData = {
             billId: billId,

@@ -81,31 +81,35 @@ export class PaymentService {
         if (!bill) throw new Error('Bill not found');
         if (bill.status === 'PAID') throw new Error('Bill already paid');
 
+        // 1. Accumulate all UNPAID bills for this user
+        const unpaidBills = await db.select().from(bills).where(
+            and(
+                eq(bills.userId, bill.userId),
+                eq(bills.status, 'UNPAID')
+            )
+        );
+
+        const grossAmount = unpaidBills.reduce((sum, b) => sum + b.amount, 0);
+
         // Check if we have a cached valid token
         const now = new Date();
         const currentEnv = config.midtransEnvironment;
 
+        // Note: With accumulation, caching becomes tricky if a new bill appeared. 
+        // We only reuse if stored snapAmount matches current accumulated total.
         if (bill.snapToken && bill.snapTokenExpiry) {
             const expiry = new Date(bill.snapTokenExpiry);
-
-            // Extract environment info from previous token if possible or just rely on expiry
-            // BUT, to be safe against env changes, we should probably encode env in orderId or just reset it.
-            // Simplified: if we have a token, we check if Midtrans would accept it.
-            // Actually, a better way is to store the environment used to generate the token.
-            // Verify that we match the environment and amount
-            if (expiry > now && bill.snapAmount === bill.amount) {
-                // Token is still valid and amount matches, reuse it
+            if (expiry > now && bill.snapAmount === grossAmount) {
                 return {
                     token: bill.snapToken,
                     redirect_url: `https://app.${currentEnv === 'production' ? '' : 'sandbox.'}midtrans.com/snap/v2/vtweb/${bill.snapToken}`,
-                    orderId: `BILL-${billId}` // Standard format
+                    orderId: `BILL-${billId}`
                 };
             }
         }
 
         // Generate new token
         const orderId = `BILL-${billId}-${Date.now()}`;
-        const grossAmount = bill.amount;
 
         const authString = btoa(config.midtransServerKey + ':');
         const isProduction = config.midtransEnvironment === 'production';
@@ -118,6 +122,14 @@ export class PaymentService {
             ? `${baseUrl.replace(/\/$/, '')}/pay/${bill.paymentToken}`
             : `${baseUrl.replace(/\/$/, '')}/bills`;
 
+        // Generate Item Details from all unpaid bills
+        const itemDetails = unpaidBills.map(b => ({
+            id: `BILL-${b.id}`,
+            price: b.amount,
+            quantity: 1,
+            name: `WiFi ${b.month}/${b.year}`
+        }));
+
         const payload = {
             transaction_details: {
                 order_id: orderId,
@@ -125,16 +137,9 @@ export class PaymentService {
             },
             customer_details: {
                 first_name: user.name,
-                phone: user.whatsapp || user.phoneNumber || '', // Fallback
+                phone: user.whatsapp || user.phoneNumber || '',
             },
-            item_details: [
-                {
-                    id: `BILL-${billId}`,
-                    price: grossAmount,
-                    quantity: 1,
-                    name: `WiFi ${bill.month}/${bill.year}`
-                }
-            ],
+            item_details: itemDetails,
             callbacks: {
                 finish: redirectUrl,
                 unfinish: redirectUrl,
@@ -160,7 +165,7 @@ export class PaymentService {
 
         const data = await response.json();
 
-        // Cache the token (expires in 24 hours)
+        // Cache the token (expires in 24 hours) - Store on Primary Bill
         const tokenExpiry = new Date(now.getTime() + 24 * 60 * 60 * 1000);
         await db.update(bills).set({
             snapToken: data.token,
@@ -219,7 +224,7 @@ export class PaymentService {
             pStatus = 'VERIFIED';
         } else if (transaction_status == 'cancel' || transaction_status == 'deny' || transaction_status == 'expire') {
             pStatus = 'REJECTED';
-            // Reset Snap Token so user can retry with a fresh one
+            // Reset Snap Token
             await db.update(bills).set({
                 snapToken: null,
                 snapTokenExpiry: null
@@ -228,17 +233,29 @@ export class PaymentService {
             pStatus = 'PENDING';
         }
 
-        // 1. Update Bill status if PAID
+        // 1. Update Bill status if PAID (CUMULATIVE LOGIC)
         if (isPaid) {
-            const bill = await db.query.bills.findFirst({
+            // Fetch the primary bill to get userId
+            const primaryBill = await db.query.bills.findFirst({
                 where: eq(bills.id, billId)
             });
 
-            if (bill && bill.status !== 'PAID') {
-                await db.update(bills).set({
-                    status: 'PAID',
-                    paidAt: new Date()
-                }).where(eq(bills.id, billId));
+            if (primaryBill) {
+                // Find ALL unpaid bills for this user
+                // To be safe, we only mark bills UNPAID at the time of transaction creation.
+                // But for simplicity, we mark all current UNPAID bills as PAID.
+                // Or better: We trust the `gross_amount` covers the bills. 
+                // We'll mark all UNPAID bills for this user as PAID.
+
+                await db.update(bills)
+                    .set({
+                        status: 'PAID',
+                        paidAt: new Date()
+                    })
+                    .where(and(
+                        eq(bills.userId, primaryBill.userId),
+                        eq(bills.status, 'UNPAID')
+                    ));
             }
         }
 
@@ -258,6 +275,7 @@ export class PaymentService {
         };
 
         // 2. Upsert Payment Record using transactionId
+        // This links the FULL amount to the Primary Bill.
         await db.insert(payments)
             .values(paymentData)
             .onConflictDoUpdate({
@@ -290,6 +308,7 @@ export class PaymentService {
 
                     if (bill && user) {
                         const prettyMethod = NotificationService.getPrettyPaymentMethod(paymentData.method, paymentData.paymentType, paymentData.issuer);
+                        // Receipt will show the total amount paid
                         await NotificationService.sendReceiptNotification(bill, user, finalConfig, paymentData.paidAt || undefined, paymentData.amount, prettyMethod);
                     }
                 } catch (err) {

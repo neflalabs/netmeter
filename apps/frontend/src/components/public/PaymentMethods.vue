@@ -109,7 +109,8 @@ const resetTransaction = async () => {
 const confirmPaymentWaLink = computed(() => {
     if (!props.bill) return '#'
     const phone = props.bill.adminPhone || '08123456789'
-    const text = `Halo, saya sudah melakukan pembayaran patungan WiFi atas nama *${props.bill.userName}* sebesar *Rp ${formatCurrency(props.bill.amount)}* via Static QRIS. Mohon diverifikasi.`
+    const amount = props.bill.totalUnpaidAmount || props.bill.amount
+    const text = `Halo, saya sudah melakukan pembayaran patungan WiFi atas nama *${props.bill.userName}* sebesar *Rp ${formatCurrency(amount)}* via Static QRIS. Mohon diverifikasi.`
     return `https://wa.me/${formatPhoneForWhatsapp(phone)}?text=${encodeURIComponent(text)}`
 })
 
@@ -202,7 +203,7 @@ const confirmWaLink = computed(() => {
                     STATIC QRIS
                 </div>
                 <img 
-                    :src="`/api/public/qris?amount=${bill.amount}`" 
+                    :src="`/api/public/qris?amount=${bill.totalUnpaidAmount || bill.amount}`" 
                     alt="QRIS Code" 
                     class="max-w-[240px] h-auto rounded-lg" 
                 />

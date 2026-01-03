@@ -93,10 +93,37 @@ app.get('/bills/:token', zValidator('param', tokenParamSchema), async (c) => {
         const adminPhone = appSettings.length > 0 ? appSettings[0].adminPhoneNumber : '';
         const bankDetails = appSettings.length > 0 ? appSettings[0].manualPaymentDetails : '';
 
+        // 3. Get Accumulation Data (All UNPAID bills for this user)
+        let accumulatedBills: any[] = [];
+        let totalUnpaidAmount = 0;
+
+        if (bill.status === 'UNPAID') {
+            const allUnpaid = await db.select({
+                id: bills.id,
+                month: bills.month,
+                year: bills.year,
+                amount: bills.amount
+            })
+                .from(bills)
+                .where(and(
+                    eq(bills.userId, bill.userId),
+                    eq(bills.status, 'UNPAID')
+                ))
+                .orderBy(desc(bills.year), desc(bills.month));
+
+            accumulatedBills = allUnpaid;
+            totalUnpaidAmount = allUnpaid.reduce((sum, b) => sum + b.amount, 0);
+        } else {
+            // If already paid, just show this bill's amount
+            totalUnpaidAmount = bill.amount;
+        }
+
         return c.json({
             ...bill,
-            adminPhone, // For Confirm via WA button
-            bankDetails: bankDetails || ''
+            adminPhone,
+            bankDetails: bankDetails || '',
+            accumulatedBills,
+            totalUnpaidAmount
         });
 
     } catch (e) {

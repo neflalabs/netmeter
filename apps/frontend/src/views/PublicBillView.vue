@@ -86,8 +86,15 @@ onMounted(() => {
                 <CardHeader class="border-b bg-muted/20 pb-4">
                     <div class="flex justify-between items-start">
                         <div>
-                            <p class="text-sm text-muted-foreground mb-1">Total Tagihan</p>
-                            <div class="text-3xl font-bold text-primary">Rp {{ formatCurrency(bill.amount) }}</div>
+                            <p class="text-sm text-muted-foreground mb-1">
+                                {{ bill.accumulatedBills?.length > 1 ? 'Total Tagihan (Akumulasi)' : 'Total Tagihan' }}
+                            </p>
+                            <div class="text-3xl font-bold text-primary">
+                                Rp {{ formatCurrency(bill.status === 'UNPAID' ? (bill.totalUnpaidAmount || bill.amount) : bill.amount) }}
+                            </div>
+                            <p v-if="bill.accumulatedBills?.length > 1" class="text-xs text-muted-foreground mt-1">
+                                Termasuk {{ bill.accumulatedBills.length }} bulan tagihan belum lunas.
+                            </p>
                         </div>
                         <Badge :variant="bill.status === 'PAID' ? 'secondary' : 'default'">
                             {{ bill.status === 'PAID' ? 'LUNAS' : 'BELUM BAYAR' }}
@@ -102,7 +109,10 @@ onMounted(() => {
                         </div>
                         <div class="text-right">
                             <p class="text-muted-foreground">Periode</p>
-                            <p class="font-medium">{{ formatMonth(bill.month, bill.year) }}</p>
+                            <p v-if="bill.accumulatedBills?.length > 1" class="font-medium">
+                                {{ bill.accumulatedBills.map((b: any) => formatMonth(b.month, b.year)).join(', ') }}
+                            </p>
+                            <p v-else class="font-medium">{{ formatMonth(bill.month, bill.year) }}</p>
                         </div>
                     </div>
 
